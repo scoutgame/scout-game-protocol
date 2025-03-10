@@ -25,7 +25,11 @@ contract ScoutTokenERC20Implementation is
         _;
     }
 
-    constructor() ERC20("Scout Token", "$SCOUT") {}
+    constructor() ERC20("Scout Protocol Token", "DEV") {
+        address _admin = MemoryUtils._getAddress(MemoryUtils.ADMIN_SLOT);
+        _mint(_admin, SUPPLY);
+        MemoryUtils._setBool(MemoryUtils.INITIALIZED_SLOT, true);
+    }
 
     function isInitialized() public view returns (bool) {
         return MemoryUtils._getBool(MemoryUtils.INITIALIZED_SLOT);
@@ -33,18 +37,19 @@ contract ScoutTokenERC20Implementation is
 
     function initialize() external onlyAdmin {
         require(!isInitialized(), "Already initialized");
-        address _admin = MemoryUtils._getAddress(MemoryUtils.ADMIN_SLOT);
-        _mint(_admin, SUPPLY);
-        MemoryUtils._setBool(MemoryUtils.INITIALIZED_SLOT, true);
     }
 
     // Override ERC20 functions to have correct name and symbol
+    // These overrides are not necessary since we already passed these values
+    // to the ERC20 constructor. The constructor values will be used by default.
+    // However, keeping them allows us to have different values than what was
+    // passed to the constructor if needed.
     function name() public pure override returns (string memory) {
-        return "Scout Token";
+        return "Scout Protocol Token";
     }
 
     function symbol() public pure override returns (string memory) {
-        return "$SCOUT";
+        return "DEV";
     }
 
     function increaseAllowance(
