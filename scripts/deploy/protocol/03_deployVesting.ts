@@ -56,10 +56,10 @@ task('deployVesting', 'Deploys the vesting contract')
     }
 
     outputContractAddress({
-      name: 'WeeklyVesting',
+      name: 'LockupWeeklyStreamCreator',
       address: sablierLockupAddress,
       network: getConnectorKey(connector.chain.id),
-      contractArtifactSource: 'contracts/protocol/contracts/WeeklyVesting.sol:WeeklyVesting',
+      contractArtifactSource: 'contracts/protocol/contracts/LockupWeeklyStreamCreator.sol:LockupWeeklyStreamCreator',
       deployArgs: [erc20Address],
       deploymentName
     });

@@ -65,10 +65,10 @@ task('deployEASResolver', 'Deploys the EAS Resolver contract')
     console.log('EAS Resolver contract deployed at:', deployedResolver.address);
 
     outputContractAddress({
-      name: 'ScoutProtocolEASResolver',
+      name: 'ProtocolEASResolver',
       address: resolverAddress,
       network: getConnectorKey(connector.chain.id),
-      contractArtifactSource: 'contracts/protocol/contracts/EAS/ScoutProtocolEASResolver.sol:ScoutProtocolEASResolver',
+      contractArtifactSource: 'contracts/protocol/contracts/EAS/ProtocolEASResolver.sol:ProtocolEASResolver',
       deployArgs: [resolverAddress],
       deploymentName
     });

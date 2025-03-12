@@ -17,7 +17,7 @@ const PRIVATE_KEY = (
   process.env.PRIVATE_KEY?.startsWith('0x') ? process.env.PRIVATE_KEY : `0x${process.env.PRIVATE_KEY}`
 ) as `0x${string}`;
 
-task('deployNft', 'Deploys or updates the Scout Protocol NftImplementation contract')
+task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol NftImplementation contract')
   .addOptionalParam('deployment', 'Deployment environment name for output directory structure', 'dev')
   .setAction(async (taskArgs, hre) => {
     await hre.run('compile');
@@ -58,7 +58,7 @@ task('deployNft', 'Deploys or updates the Scout Protocol NftImplementation contr
 
     outputContractAddress({
       name: 'ScoutProtocolBuilderNFTImplementation',
-      address: implementationAddress.toLowerCase() as string,
+      address: implementationAddress,
       network: getConnectorKey(connector.chain.id),
       contractArtifactSource:
         'contracts/protocol/contracts/ERC1155/ScoutProtocolBuilderNFTImplementation.sol:ScoutProtocolBuilderNFTImplementation',
@@ -200,7 +200,7 @@ task('deployNft', 'Deploys or updates the Scout Protocol NftImplementation contr
 
       outputContractAddress({
         name: 'ScoutProtocolBuilderNFTProxy',
-        address: proxyAddress.toLowerCase() as string,
+        address: proxyAddress,
         contractArtifactSource:
           'contracts/protocol/contracts/ERC1155/ScoutProtocolBuilderNFTProxy.sol:ScoutProtocolBuilderNFTProxy',
         network: getConnectorKey(connector.chain.id),
