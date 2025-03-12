@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { v4 as uuid } from 'uuid';
 import type { Address } from 'viem';
-import { parseEventLogs } from 'viem';
+import { getAddress, parseEventLogs } from 'viem';
 
 import type { ScoutProtocolBuilderNFTFixture } from '../../../../deployScoutProtocolBuilderNft';
 import type { ScoutTokenERC20TestFixture } from '../../../../deployScoutTokenERC20';
@@ -1404,6 +1404,152 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
             }
           )
         ).rejects.toThrow('Token not yet allocated');
+      });
+    });
+  });
+
+  describe('mintTo()', function () {
+    describe('effects', function () {
+      it('Mints tokens to the specified account', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        const builderId = uuid();
+        const builderAddress = randomEthereumAddress();
+        await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken([builderId, builderAddress]);
+
+        // Admin mints tokens to the user
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(10)])
+        ).resolves.toBeDefined();
+
+        const balance = await scoutProtocolBuilderNFT.builderNftContract.read.balanceOf([testUserAddress, BigInt(1)]);
+        expect(balance).toBe(BigInt(10));
+      });
+    });
+
+    describe('events', function () {
+      it('Emits TransferSingle event with correct parameters', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        const builderId = uuid();
+        const builderAddress = randomEthereumAddress();
+        await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken([builderId, builderAddress]);
+
+        const tokenId = BigInt(1);
+        const amount = BigInt(10);
+
+        // Admin mints tokens to the user
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.mintTo([
+          testUserAddress,
+          tokenId,
+          amount
+        ]);
+
+        // Extract logs and parse events
+        const receipt = await erc1155AdminAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['TransferSingle']
+        });
+
+        // Check for TransferSingle event
+        const transferEvent = parsedLogs.find((log) => log.eventName === 'TransferSingle');
+        expect(transferEvent).toBeDefined();
+
+        expect(transferEvent!.args.operator).toEqual(getAddress(erc1155AdminAccount.account.address));
+        expect(transferEvent!.args.from).toEqual('0x0000000000000000000000000000000000000000');
+        expect(transferEvent!.args.to).toEqual(getAddress(testUserAddress));
+        expect(transferEvent!.args.id).toEqual(tokenId);
+        expect(transferEvent!.args.value).toEqual(amount);
+      });
+
+      it('Emits TransferSingle event with correct parameters', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT
+        });
+
+        const tokenId = BigInt(1);
+        const amount = BigInt(10);
+
+        // Admin mints tokens to the user
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.mintTo([
+          testUserAddress,
+          tokenId,
+          amount
+        ]);
+
+        // Extract logs and parse events
+        const receipt = await erc1155AdminAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['TransferSingle']
+        });
+
+        // Check for TransferSingle event
+        const transferEvent = parsedLogs.find((log) => log.eventName === 'TransferSingle');
+        expect(transferEvent).toBeDefined();
+
+        expect(transferEvent!.args.operator).toEqual(getAddress(erc1155AdminAccount.account.address));
+        expect(transferEvent!.args.from).toEqual('0x0000000000000000000000000000000000000000');
+        expect(transferEvent!.args.to).toEqual(getAddress(testUserAddress));
+        expect(transferEvent!.args.id).toEqual(tokenId);
+        expect(transferEvent!.args.value).toEqual(amount);
+      });
+    });
+
+    describe('permissions', function () {
+      it('prevents non-admins from minting tokens to an account', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT
+        });
+
+        // Non-admin tries to mint tokens
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(10)], {
+            account: secondUserAccount.account
+          })
+        ).rejects.toThrow('Caller is not the admin or minter');
+      });
+
+      it('Minter can mint tokens to an account', async function () {
+        const { secondUserAccount, thirdUserAccount: minterAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        const builderId = uuid();
+        const builderAddress = randomEthereumAddress();
+        await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken([builderId, builderAddress]);
+
+        await scoutProtocolBuilderNFT.builderNftContract.write.setMinter([minterAccount.account.address]);
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(5)], {
+            account: erc1155AdminAccount.account
+          })
+        ).resolves.toBeDefined();
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(10)], {
+            account: minterAccount.account
+          })
+        ).resolves.toBeDefined();
+
+        const balance = await scoutProtocolBuilderNFT.builderNftContract.read.balanceOf([testUserAddress, BigInt(1)]);
+
+        expect(balance).toBe(BigInt(15));
       });
     });
   });
