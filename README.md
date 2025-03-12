@@ -1,4 +1,4 @@
-# scout-protocol
+# Scout Game Protocol
 
 This project was built with Hardhat. For more reference, visit https://hardhat.org/hardhat-runner/docs/getting-started
 
