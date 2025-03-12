@@ -102,7 +102,7 @@ const config: Omit<HardhatUserConfig, 'networks'> & { networks: Record<Supported
         chainId: baseSepolia.id
       },
       base: {
-        url: connectors.basesepolia.rpcUrl,
+        url: connectors.base.rpcUrl,
         accounts: [PRIVATE_KEY],
         gasPrice: 3e7,
         chainId: base.id
@@ -135,7 +135,8 @@ const config: Omit<HardhatUserConfig, 'networks'> & { networks: Record<Supported
         opsepolia: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ',
         optimism: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ',
         basesepolia: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ',
-        sepolia: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ'
+        sepolia: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ',
+        base: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ'
       },
       customChains: [
         {
