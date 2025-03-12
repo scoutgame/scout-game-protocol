@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -66,11 +67,13 @@ const PRIVATE_KEY = (
   process.env.PRIVATE_KEY?.startsWith('0x') ? process.env.PRIVATE_KEY : `0x${process.env.PRIVATE_KEY}`
 ) as `0x${string}`;
 
-task('deployDeterministicScoutGameERC20', 'Deploys or updates the Scout Game ERC20 contract').setAction(
-  async (taskArgs, hre) => {
+task('deployDeterministicScoutGameERC20', 'Deploys or updates the Scout Game ERC20 contract')
+  .addOptionalParam('deployment', 'Deployment environment name for output directory structure', 'dev')
+  .setAction(async (taskArgs, hre) => {
     await hre.run('compile');
 
     const connector = getConnectorFromHardhatRuntimeEnvironment(hre);
+    const deploymentName = taskArgs.deployment;
 
     const adminAddress = getScoutProtocolSafeAddress();
 
@@ -100,10 +103,10 @@ task('deployDeterministicScoutGameERC20', 'Deploys or updates the Scout Game ERC
       transport: http(connector.rpcUrl)
     }).extend(publicActions);
 
-    log.info('Using account:', account.address, 'on chain:', connector.chain.name);
+    // Generate a random 32-byte salt for deterministic deployment
+    const salt = `0x${randomBytes(32).toString('hex')}` as `0x${string}`;
 
-    // Encode the function call with parameters
-    const salt = '0x00055555555555555555535155b88848f5599cdaaae328fbdd36ff0682012292';
+    log.info(`Using account ${account.address} on chain ${connector.chain.name} with salt: ${salt}`);
 
     // Base will hold the supply, and other L2s will be compatible
 
@@ -152,7 +155,8 @@ task('deployDeterministicScoutGameERC20', 'Deploys or updates the Scout Game ERC
       metadata: {
         salt
       },
-      deployArgs: []
+      deployArgs: [],
+      deploymentName
     });
 
     const deployedImplementation = await hre.viem.getContractAt('ScoutTokenERC20Implementation', expectedAddress);
@@ -194,7 +198,7 @@ task('deployDeterministicScoutGameERC20', 'Deploys or updates the Scout Game ERC
       log.error('Error verifying contract', err);
     }
 
-    log.info('Deployed Scout Token ERC20 proxy address: ', expectedProxyAddress);
+    log.info(`Deployed Scout Token ERC20 proxy address: ${expectedProxyAddress}`);
 
     outputContractAddress({
       name: 'ScoutTokenERC20Proxy',
@@ -205,9 +209,9 @@ task('deployDeterministicScoutGameERC20', 'Deploys or updates the Scout Game ERC
         deployer: account.address,
         salt
       },
-      deployArgs: proxyDeployArgs.slice()
+      deployArgs: proxyDeployArgs.slice(),
+      deploymentName
     });
-  }
-);
+  });
 
 module.exports = {};

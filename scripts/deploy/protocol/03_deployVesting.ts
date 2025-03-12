@@ -16,62 +16,65 @@ const PRIVATE_KEY = (
   process.env.PRIVATE_KEY?.startsWith('0x') ? process.env.PRIVATE_KEY : `0x${process.env.PRIVATE_KEY}`
 ) as `0x${string}`;
 
-task('deployVesting', 'Deploys or updates the Sablier Vesting contract').setAction(async (taskArgs, hre) => {
-  const connector = getConnectorFromHardhatRuntimeEnvironment(hre);
+task('deployVesting', 'Deploys the vesting contract')
+  .addOptionalParam('deployment', 'Deployment environment name for output directory structure', 'dev')
+  .setAction(async (taskArgs, hre) => {
+    await hre.run('compile');
 
-  await hre.run('compile');
+    const connector = getConnectorFromHardhatRuntimeEnvironment(hre);
+    const deploymentName = taskArgs.deployment;
 
-  const account = privateKeyToAccount(PRIVATE_KEY);
-  const walletClient = createWalletClient({
-    account,
-    chain: connector.chain,
-    transport: http(connector.rpcUrl)
-  });
+    const account = privateKeyToAccount(PRIVATE_KEY);
+    const walletClient = createWalletClient({
+      account,
+      chain: connector.chain,
+      transport: http(connector.rpcUrl)
+    });
 
-  // Deploy the implementation contract first
-  const { erc20Address } = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'erc20Address',
-      message: 'Enter the address for the Scout ERC20 token',
-      validate: (input) => (isAddress(input) ? true : 'Invalid address')
+    // Deploy the implementation contract first
+    const { erc20Address } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'erc20Address',
+        message: 'Enter the address for the Scout ERC20 token',
+        validate: (input) => (isAddress(input) ? true : 'Invalid address')
+      }
+    ]);
+
+    const deployArgs = [erc20Address, connector.sablier?.SablierV2LockupTranched as Address] as [Address, Address];
+
+    const deployedSablierLockup = await hre.viem.deployContract('LockupWeeklyStreamCreator', deployArgs, {
+      client: {
+        wallet: walletClient
+      }
+    });
+
+    const sablierLockupAddress = deployedSablierLockup.address;
+
+    if (!sablierLockupAddress) {
+      throw new Error('Failed to deploy erc20 contract');
     }
-  ]);
 
-  const deployArgs = [erc20Address, connector.sablier?.SablierV2LockupTranched as Address] as [Address, Address];
+    outputContractAddress({
+      name: 'WeeklyVesting',
+      address: sablierLockupAddress,
+      network: getConnectorKey(connector.chain.id),
+      contractArtifactSource: 'contracts/protocol/contracts/WeeklyVesting.sol:WeeklyVesting',
+      deployArgs: [erc20Address],
+      deploymentName
+    });
 
-  const deployedSablierLockup = await hre.viem.deployContract('LockupWeeklyStreamCreator', deployArgs, {
-    client: {
-      wallet: walletClient
+    // Verify contract in the explorer
+
+    try {
+      execSync(
+        `npx hardhat verify --network ${getConnectorKey(connector.chain.id)} ${sablierLockupAddress} ${deployArgs.join(' ')}`
+      );
+    } catch (err) {
+      console.warn('Error verifying contract', err);
     }
+
+    console.log('Sablier Vesting contract deployed at:', sablierLockupAddress);
   });
-
-  const sablierLockupAddress = deployedSablierLockup.address;
-
-  if (!sablierLockupAddress) {
-    throw new Error('Failed to deploy erc20 contract');
-  }
-
-  outputContractAddress({
-    name: 'SablierLockupWeeklyStreamCreator',
-    address: sablierLockupAddress,
-    contractArtifactSource:
-      'contracts/protocol/contracts/Vesting/LockupWeeklyStreamCreator.sol:LockupWeeklyStreamCreator',
-    network: getConnectorKey(connector.chain.id),
-    deployArgs: deployArgs.slice()
-  });
-
-  // Verify contract in the explorer
-
-  try {
-    execSync(
-      `npx hardhat verify --network ${getConnectorKey(connector.chain.id)} ${sablierLockupAddress} ${deployArgs.join(' ')}`
-    );
-  } catch (err) {
-    console.warn('Error verifying contract', err);
-  }
-
-  console.log('Sablier Vesting contract deployed at:', sablierLockupAddress);
-});
 
 module.exports = {};

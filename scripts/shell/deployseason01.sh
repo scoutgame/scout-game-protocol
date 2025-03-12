@@ -14,6 +14,8 @@ continue_or_exit() {
 echo "Enter the network name (e.g. opsepolia, optimism, sepolia, basesepolia, base):"
 read NETWORK
 
+echo "Enter the deployment name (e.g. season01_official, season02_official, etc):"
+read DEPLOYMENT_NAME
 
 # Validate network name against supported chains
 case $NETWORK in
@@ -31,8 +33,8 @@ case $NETWORK in
     ;;
 esac
 
-
-CONTRACTS_DIR="protocolcontracts/$NETWORK"
+DEPLOYMENT_NAME="prd"
+CONTRACTS_DIR="deployments/$DEPLOYMENT_NAME/$NETWORK"
 
 # Check if contracts directory exists and remove it
 if [ -d "$CONTRACTS_DIR" ]; then
@@ -52,19 +54,19 @@ echo -e "Protocol"
 continue_or_exit ""
 
 npm run compile
-npm run scout:deploy:erc20 $NETWORK || exit 1
+npm run scout:deploy:erc20 $NETWORK -- --deployment $DEPLOYMENT_NAME || exit 1
 continue_or_exit "ERC20 deployment completed."
 
-npm run scout:deploy:buildernft $NETWORK || exit 1
+npm run scout:deploy:buildernft $NETWORK -- --deployment $DEPLOYMENT_NAME || exit 1
 continue_or_exit "Builder NFT deployment completed."
 
-npm run scout:deploy:vesting $NETWORK || exit 1
+npm run scout:deploy:vesting $NETWORK -- --deployment $DEPLOYMENT_NAME || exit 1
 continue_or_exit "Vesting deployment completed."
 
-npm run scout:deploy:easresolver $NETWORK || exit 1
+npm run scout:deploy:easresolver $NETWORK -- --deployment $DEPLOYMENT_NAME || exit 1
 continue_or_exit "EAS Resolver deployment completed."
 
-npm run scout:deploy:protocol $NETWORK || exit 1
+npm run scout:deploy:protocol $NETWORK -- --deployment $DEPLOYMENT_NAME || exit 1
 echo "Protocol deployment completed."
 
 echo ""
