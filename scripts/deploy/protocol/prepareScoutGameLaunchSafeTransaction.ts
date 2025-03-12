@@ -312,9 +312,17 @@ task('prepareScoutGameLaunchSafeTransaction', 'Deploys or updates the Scout Game
       value: '0'
     };
 
-    await apiKit.estimateSafeTransaction(safeAddress, erc20TxData);
+    const existingContract = await hre.viem.getContractAt('ScoutTokenERC20Implementation', scoutTokenERC20ProxyAddress);
 
-    safeTransactionData.push(erc20TxData);
+    const isERC20Initialized = await existingContract.read.isInitialized();
+
+    if (!isERC20Initialized) {
+      await apiKit.estimateSafeTransaction(safeAddress, erc20TxData);
+
+      safeTransactionData.push(erc20TxData);
+    } else {
+      console.log('ERC20 is already initialized');
+    }
 
     // Phase 2 - Prepare the Builder NFT contract
 
