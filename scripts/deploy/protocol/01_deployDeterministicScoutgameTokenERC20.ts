@@ -69,6 +69,7 @@ const PRIVATE_KEY = (
 
 task('deployDeterministicScoutGameERC20', 'Deploys or updates the Scout Game ERC20 contract')
   .addOptionalParam('deployment', 'Deployment environment name for output directory structure', 'dev')
+  .addOptionalParam('salt', 'Salt for deterministic deployment', `0x${randomBytes(32).toString('hex')}`)
   .setAction(async (taskArgs, hre) => {
     await hre.run('compile');
 
@@ -104,7 +105,7 @@ task('deployDeterministicScoutGameERC20', 'Deploys or updates the Scout Game ERC
     }).extend(publicActions);
 
     // Generate a random 32-byte salt for deterministic deployment
-    const salt = `0x${randomBytes(32).toString('hex')}` as `0x${string}`;
+    const salt = taskArgs.salt as `0x${string}`;
 
     log.info(`Using account ${account.address} on chain ${connector.chain.name} with salt: ${salt}`);
 
