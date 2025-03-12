@@ -16,11 +16,13 @@ const PRIVATE_KEY = (
   process.env.PRIVATE_KEY?.startsWith('0x') ? process.env.PRIVATE_KEY : `0x${process.env.PRIVATE_KEY}`
 ) as `0x${string}`;
 
-task('deployEASResolver', 'Deploys or updates the EAS Resolver and scoutgame attestation schemas').setAction(
-  async (taskArgs, hre) => {
-    const connector = getConnectorFromHardhatRuntimeEnvironment(hre);
-
+task('deployEASResolver', 'Deploys the EAS Resolver contract')
+  .addOptionalParam('deployment', 'Deployment environment name for output directory structure', 'dev')
+  .setAction(async (taskArgs, hre) => {
     await hre.run('compile');
+
+    const connector = getConnectorFromHardhatRuntimeEnvironment(hre);
+    const deploymentName = taskArgs.deployment;
 
     const adminAddress = getScoutProtocolSafeAddress();
 
@@ -67,7 +69,8 @@ task('deployEASResolver', 'Deploys or updates the EAS Resolver and scoutgame att
       address: resolverAddress,
       network: getConnectorKey(connector.chain.id),
       contractArtifactSource: 'contracts/protocol/contracts/EAS/ProtocolEASResolver.sol:ProtocolEASResolver',
-      deployArgs: deployArgs.slice()
+      deployArgs: [resolverAddress],
+      deploymentName
     });
 
     console.log(`Transferring Admin role to Safe Address: ${adminAddress}`);
@@ -75,7 +78,6 @@ task('deployEASResolver', 'Deploys or updates the EAS Resolver and scoutgame att
     await deployedResolver.write.transferAdmin([adminAddress], {
       account: walletClient.account
     });
-  }
-);
+  });
 
 module.exports = {};

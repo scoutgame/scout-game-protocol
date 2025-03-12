@@ -1,8 +1,0 @@
-{
-  "name": "ScoutProtocolImplementation",
-  "address": "0xc2ea862c983c3ea57221e7b538f9cd7712cddd54",
-  "network": "basesepolia",
-  "contractArtifactSource": "contracts/protocol/contracts/ScoutProtocol/ScoutProtocolImplementation.sol:ScoutProtocolImplementation",
-  "metadata": {},
-  "deployArgs": []
-}

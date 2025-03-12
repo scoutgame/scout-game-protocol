@@ -6,6 +6,7 @@ export type DeployedContractInfo = {
   address: string;
   network: string;
   contractArtifactSource: string;
+  deploymentName: string;
   metadata?: any;
   deployArgs?: any[];
 };
@@ -15,11 +16,16 @@ export function outputContractAddress({
   address,
   network,
   contractArtifactSource,
+  deploymentName,
   metadata = {},
   deployArgs = []
 }: DeployedContractInfo) {
-  // Check if protocolcontracts directory exists, create if not
-  const contractsDir = path.resolve('protocolcontracts');
+  // Check if deployments directory exists, create if not
+  const contractsDirRoot = path.resolve('deployments');
+  if (!fs.existsSync(contractsDirRoot)) {
+    fs.mkdirSync(contractsDirRoot);
+  }
+  const contractsDir = path.resolve(contractsDirRoot, deploymentName);
   if (!fs.existsSync(contractsDir)) {
     fs.mkdirSync(contractsDir);
   }

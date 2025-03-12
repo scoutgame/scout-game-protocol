@@ -17,13 +17,15 @@ const PRIVATE_KEY = (
   process.env.PRIVATE_KEY?.startsWith('0x') ? process.env.PRIVATE_KEY : `0x${process.env.PRIVATE_KEY}`
 ) as `0x${string}`;
 
-task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Builder NFT contracts').setAction(
-  async (taskArgs, hre) => {
-    const adminAddress = getScoutProtocolSafeAddress();
+task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol NftImplementation contract')
+  .addOptionalParam('deployment', 'Deployment environment name for output directory structure', 'dev')
+  .setAction(async (taskArgs, hre) => {
+    await hre.run('compile');
 
     const connector = getConnectorFromHardhatRuntimeEnvironment(hre);
+    const deploymentName = taskArgs.deployment;
 
-    await hre.run('compile');
+    const adminAddress = getScoutProtocolSafeAddress();
 
     const client = createPublicClient({
       chain: connector.chain,
@@ -60,7 +62,8 @@ task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Bui
       network: getConnectorKey(connector.chain.id),
       contractArtifactSource:
         'contracts/protocol/contracts/ERC1155/ScoutProtocolBuilderNFTImplementation.sol:ScoutProtocolBuilderNFTImplementation',
-      deployArgs: []
+      deployArgs: [],
+      deploymentName
     });
 
     let deployNew = true;
@@ -196,12 +199,13 @@ task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Bui
       console.log('ERC1155 Proxy contract deployed at:', proxyAddress);
 
       outputContractAddress({
-        name: 'ScoutProtocolERC1155BuilderNFTProxy',
+        name: 'ScoutProtocolBuilderNFTProxy',
         address: proxyAddress,
         contractArtifactSource:
           'contracts/protocol/contracts/ERC1155/ScoutProtocolBuilderNFTProxy.sol:ScoutProtocolBuilderNFTProxy',
         network: getConnectorKey(connector.chain.id),
-        deployArgs: deployArgs.slice()
+        deployArgs: deployArgs.slice(),
+        deploymentName
       });
 
       try {
@@ -216,7 +220,6 @@ task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Bui
 
       await newProxyContract.write.transferAdmin([adminAddress]);
     }
-  }
-);
+  });
 
 module.exports = {};
