@@ -4,7 +4,7 @@ import type { Address } from 'viem';
 import type { SupportedChains } from './connectors';
 import { NULL_EVM_ADDRESS } from './constants';
 
-const DEPLOY_SALT = 'deterministic-salt-02';
+const DEPLOY_SALT = 'deterministic-salt-03';
 
 export function getDeterministicDeploySalt() {
   return `0x${Buffer.from(DEPLOY_SALT.padEnd(32, '0')).toString('hex')}`;
