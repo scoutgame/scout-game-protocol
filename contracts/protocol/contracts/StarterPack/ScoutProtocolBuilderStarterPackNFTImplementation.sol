@@ -34,7 +34,7 @@ library ImplementationStorage {
     }
 }
 
-contract ScoutGameStarterPackNFTImplementation is
+contract ScoutProtocolBuilderStarterPackNFTImplementation is
     Context,
     ERC165,
     IERC1155,
