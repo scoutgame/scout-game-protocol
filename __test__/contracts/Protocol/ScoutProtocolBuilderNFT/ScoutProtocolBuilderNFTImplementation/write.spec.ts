@@ -503,7 +503,7 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
             [userAccount.account.address, unregisteredTokenId, BigInt(1)],
             { account: userAccount.account }
           )
-        ).rejects.toThrow('Token ID not registered');
+        ).rejects.toThrow('Token not yet allocated');
       });
     });
   });
