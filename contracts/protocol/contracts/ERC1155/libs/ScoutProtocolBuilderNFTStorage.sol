@@ -17,6 +17,8 @@ library ScoutProtocolBuilderNFTStorage {
     }
 
     bytes32 internal constant STORAGE_SLOT = keccak256("builderNFT.storage");
+    bytes32 internal constant MAX_SUPPLY_SLOT =
+        keccak256("builderNFT.maxSupply");
 
     function layout() internal pure returns (Layout storage l) {
         bytes32 slot = STORAGE_SLOT;

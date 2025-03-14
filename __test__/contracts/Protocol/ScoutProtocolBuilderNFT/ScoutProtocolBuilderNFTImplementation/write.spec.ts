@@ -483,6 +483,31 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
     });
 
     describe('validations', function () {
+      it('Reverts if token supply limit is reached', async function () {
+        await scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([BigInt(78)], {
+          account: erc1155AdminAccount.account
+        });
+
+        const { tokenId } = await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT
+        });
+
+        await mintNft({
+          wallet: userAccount,
+          erc20: token,
+          nft: scoutProtocolBuilderNFT,
+          amount: 78,
+          tokenId
+        });
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mint([userAccount.account.address, tokenId, BigInt(1)], {
+            account: userAccount.account
+          })
+        ).rejects.toThrow('Token supply limit reached');
+      });
+
       it('Reverts if tokenId is not registered', async function () {
         const unregisteredTokenId = BigInt(999);
         const mintPrice = await scoutProtocolBuilderNFT.builderNftContract.read.getTokenPurchasePrice([
@@ -1404,6 +1429,47 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
             }
           )
         ).rejects.toThrow('Token not yet allocated');
+      });
+    });
+  });
+
+  describe('setMaxSupplyPerToken()', function () {
+    describe('effects', function () {
+      it('Updates the max supply per token', async function () {
+        const newMaxSupply = BigInt(127);
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([newMaxSupply], {
+            account: erc1155AdminAccount.account
+          })
+        ).resolves.toBeDefined();
+
+        const maxSupply = await scoutProtocolBuilderNFT.builderNftContract.read.maxSupplyPerToken();
+        expect(maxSupply).toEqual(newMaxSupply);
+      });
+    });
+
+    describe('permissions', function () {
+      it('Only admin can set the max supply per token', async function () {
+        const newMaxSupply = BigInt(128);
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([newMaxSupply], {
+            account: userAccount.account
+          })
+        ).rejects.toThrow('Caller is not the admin');
+      });
+    });
+
+    describe('validations', function () {
+      it('Reverts if new max supply is zero', async function () {
+        const newMaxSupply = BigInt(0);
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([newMaxSupply], {
+            account: erc1155AdminAccount.account
+          })
+        ).rejects.toThrow('Max supply must be greater than 0');
       });
     });
   });

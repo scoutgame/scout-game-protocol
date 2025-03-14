@@ -35,6 +35,8 @@ export async function deployScoutProtocolBuilderNftContract({
     { client: { wallet: admin } } // Use the admin account for interaction
   );
 
+  await proxyWithImplementationABI.write.setMaxSupplyPerToken([BigInt(50)]);
+
   return {
     builderProxyContract: proxy,
     builderNftContract: proxyWithImplementationABI,

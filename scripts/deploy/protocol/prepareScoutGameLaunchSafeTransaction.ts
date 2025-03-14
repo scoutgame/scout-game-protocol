@@ -86,6 +86,19 @@ const erc1155Abi = [
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'newMaxSupply',
+        type: 'uint256'
+      }
+    ],
+    name: 'setMaxSupplyPerToken',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
   }
 ];
 
@@ -153,6 +166,7 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       firstTokenDistributionTimestamp,
       nftPrefix,
       nftSuffix,
+      nftMaxSupply,
       sablierLockupTranchedAddress,
       scoutBuilderNFTERC1155ProxyAddress,
       scoutProtocolAddress,
@@ -198,6 +212,12 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
         name: 'nftSuffix',
         message: '[Filename] Enter the NFT metadata suffix:',
         default: 'metadata.json'
+      },
+      {
+        type: 'number',
+        name: 'nftMaxSupply',
+        message: '[Max Supply] Enter the NFT max supply:',
+        validate: (input) => (input ?? 0) > 0 || 'Please enter a valid max supply'
       },
       {
         type: 'input',
@@ -369,6 +389,23 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
     await apiKit.estimateSafeTransaction(safeAddress, nftSetBaseUriTxData);
 
     safeTransactionData.push(nftSetBaseUriTxData);
+
+    const encodedERC1155SetMaxSupplyPerTokenData = encodeFunctionData({
+      abi: erc1155Abi,
+      functionName: 'setMaxSupplyPerToken',
+      args: [nftMaxSupply]
+    });
+
+    const nftSetMaxSupplyPerTokenTxData = {
+      to: getAddress(scoutBuilderNFTERC1155ProxyAddress),
+      data: encodedERC1155SetMaxSupplyPerTokenData,
+      operation: OperationType.Call,
+      value: '0'
+    };
+
+    await apiKit.estimateSafeTransaction(safeAddress, nftSetMaxSupplyPerTokenTxData);
+
+    safeTransactionData.push(nftSetMaxSupplyPerTokenTxData);
 
     // Phase 3 - Configure the EAS Attester Wallet
 
