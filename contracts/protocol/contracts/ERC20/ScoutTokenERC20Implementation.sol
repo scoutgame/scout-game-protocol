@@ -25,7 +25,7 @@ contract ScoutTokenERC20Implementation is
         _;
     }
 
-    constructor() ERC20("Scout Token", "$SCOUT") {}
+    constructor() ERC20("Scout Protocol Token", "DEV") {}
 
     function isInitialized() public view returns (bool) {
         return MemoryUtils._getBool(MemoryUtils.INITIALIZED_SLOT);
@@ -40,11 +40,11 @@ contract ScoutTokenERC20Implementation is
 
     // Override ERC20 functions to have correct name and symbol
     function name() public pure override returns (string memory) {
-        return "Scout Token";
+        return "Scout Protocol Token";
     }
 
     function symbol() public pure override returns (string memory) {
-        return "$SCOUT";
+        return "DEV";
     }
 
     function increaseAllowance(
