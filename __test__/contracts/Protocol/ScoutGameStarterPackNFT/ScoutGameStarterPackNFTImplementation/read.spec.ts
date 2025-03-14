@@ -1,12 +1,12 @@
 import { v4 as uuid } from 'uuid';
 import { getAddress } from 'viem';
 
-import { randomBigIntFromInterval } from '../../../../lib/utils';
-import type { BuilderNftStarterPackFixture } from '../../../deployBuilderNftStarterPack';
-import type { USDCTestFixture } from '../../../deployTestUSDC';
-import { loadContractWithStarterPackFixtures } from '../../../fixtures';
-import type { GeneratedWallet } from '../../../generateWallets';
-import { generateWallets } from '../../../generateWallets';
+import { randomBigIntFromInterval } from '../../../../../lib/utils';
+import type { BuilderNftStarterPackFixture } from '../../../../deployBuilderNftStarterPack';
+import type { USDCTestFixture } from '../../../../deployTestUSDC';
+import { loadContractWithStarterPackFixtures } from '../../../../fixtures';
+import type { GeneratedWallet } from '../../../../generateWallets';
+import { generateWallets } from '../../../../generateWallets';
 
 describe('ScoutGameStarterPackNFTImplementation', function () {
   let builderNftContract: BuilderNftStarterPackFixture['builderNftContract'];

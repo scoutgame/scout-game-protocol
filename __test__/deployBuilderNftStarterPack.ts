@@ -20,7 +20,7 @@ export async function deployBuilderNftStarterPackContract({
   const erc20Contract = USDCContractAddress || (await deployTestUSDC().then(({ USDC }) => USDC.address));
 
   const proxy = await viem.deployContract(
-    'ScoutGameStarterPackNFTUpgradeable',
+    'ScoutGameStarterPackNFTProxy',
     [implementation.address, erc20Contract as Address, proceedsReceiver, tokenName, tokenSymbol],
     {
       client: { wallet: admin }

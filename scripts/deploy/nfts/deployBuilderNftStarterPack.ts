@@ -227,7 +227,7 @@ task('deployScoutGameStarterPackNFT', 'Deploys or updates the BuilderNFT Starter
 
       const deployArgs = [...deployConfigArgs, ...tokenInfoArgs] as [Address, Address, Address, string, string];
 
-      const newProxyContract = await hre.viem.deployContract('ScoutGameStarterPackNFTUpgradeable', deployArgs, {
+      const newProxyContract = await hre.viem.deployContract('ScoutGameStarterPackNFTProxy', deployArgs, {
         client: {
           wallet: walletClient
         }
