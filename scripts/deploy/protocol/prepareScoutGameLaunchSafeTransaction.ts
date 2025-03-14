@@ -486,13 +486,13 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
     safeTransactionData.push(builderStarterPackNftSetBaseUriTxData);
 
     const encodedERC1155SetMaxSupplyPerTokenData = encodeFunctionData({
-      abi: erc1155Abi,
+      abi: builderNftAbi,
       functionName: 'setMaxSupplyPerToken',
       args: [nftMaxSupply]
     });
 
     const nftSetMaxSupplyPerTokenTxData = {
-      to: getAddress(scoutBuilderNFTERC1155ProxyAddress),
+      to: getAddress(scoutBuilderNFTProxyAddress),
       data: encodedERC1155SetMaxSupplyPerTokenData,
       operation: OperationType.Call,
       value: '0'
