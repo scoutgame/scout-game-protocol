@@ -19,6 +19,7 @@
     "deploy:create2deployer": "npx hardhat deployFoundryCreate2Deployer --network",
     "proxy:update": "npx hardhat updateProxyImplementation --network",
     "scout:deploy:buildernft": "npx hardhat deployScoutProtocolBuilderNFT --network",
+    "scout:deploy:starterpack": "npx hardhat deployScoutProtocolBuilderStarterPackNFT --network",
     "scout:deploy:erc20": "npx hardhat deployDeterministicScoutGameERC20 --network",
     "scout:deploy:easresolver": "npx hardhat deployEASResolver --network",
     "scout:deploy:protocol": "npx hardhat deployScoutProtocol --network",
