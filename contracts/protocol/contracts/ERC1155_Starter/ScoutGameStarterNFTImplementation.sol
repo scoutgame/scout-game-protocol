@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../SeasonOne/libs/MemoryUtils.sol";
+import "../../libs/MemoryUtils.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../libs/ScoutProtocolAccessControl.sol";
+import "../../libs/StringUtils.sol";
 
 library ImplementationStorage {
     struct Layout {
@@ -34,11 +36,12 @@ library ImplementationStorage {
     }
 }
 
-contract ScoutGameStarterPackNFTImplementation is
+contract ScoutGameStarterNFTImplementation is
     Context,
     ERC165,
     IERC1155,
-    IERC1155MetadataURI
+    IERC1155MetadataURI,
+    ScoutProtocolAccessControl
 {
     using MemoryUtils for bytes32;
     using Address for address;
@@ -47,18 +50,10 @@ contract ScoutGameStarterPackNFTImplementation is
     event BuilderScouted(uint256 tokenId, uint256 amount, string scout);
     event BuilderTokenRegistered(uint256 tokenId, string builderId);
 
-    modifier onlyAdmin() {
-        require(
-            MemoryUtils.isAdmin(msg.sender),
-            "Proxy: caller is not the admin"
-        );
-        _;
-    }
-
     modifier onlyAdminOrMinter() {
         require(
-            MemoryUtils.isAdmin(msg.sender) || MemoryUtils.isMinter(msg.sender),
-            "Proxy: caller is not the admin or minter"
+            _isAdmin() || _hasRole(MemoryUtils.MINTER_SLOT),
+            "Caller is not the admin or minter"
         );
         _;
     }
@@ -78,7 +73,10 @@ contract ScoutGameStarterPackNFTImplementation is
         string calldata builderId,
         uint256 builderTokenId
     ) external onlyAdminOrMinter {
-        require(_isValidUUID(builderId), "Builder ID must be a valid UUID");
+        require(
+            StringUtils._isValidUUID(builderId),
+            "Builder ID must be a valid UUID"
+        );
         require(
             ImplementationStorage.layout().builderToTokenRegistry[builderId] ==
                 0,
@@ -232,10 +230,10 @@ contract ScoutGameStarterPackNFTImplementation is
         _validateMint(account, tokenId, amount, scout);
 
         uint256 price = getTokenPurchasePrice(amount);
-        address paymentToken = MemoryUtils.getAddress(
-            MemoryUtils.PAYMENT_ERC20_TOKEN_SLOT
+        address paymentToken = MemoryUtils._getAddress(
+            MemoryUtils.CLAIMS_TOKEN_SLOT
         );
-        address proceedsReceiver = MemoryUtils.getAddress(
+        address proceedsReceiver = MemoryUtils._getAddress(
             MemoryUtils.PROCEEDS_RECEIVER_SLOT
         );
 
@@ -277,11 +275,11 @@ contract ScoutGameStarterPackNFTImplementation is
 
     function setMinter(address minter) external onlyAdmin {
         require(minter != address(0), "Invalid address");
-        MemoryUtils.setAddress(MemoryUtils.MINTER_SLOT, minter);
+        MemoryUtils._setAddress(MemoryUtils.MINTER_SLOT, minter);
     }
 
     function getMinter() external view returns (address) {
-        return MemoryUtils.getAddress(MemoryUtils.MINTER_SLOT);
+        return MemoryUtils._getAddress(MemoryUtils.MINTER_SLOT);
     }
 
     function mintTo(
@@ -323,7 +321,7 @@ contract ScoutGameStarterPackNFTImplementation is
         uint256 amount,
         string calldata scout
     ) internal view {
-        require(_isValidUUID(scout), "Scout must be a valid UUID");
+        require(StringUtils._isValidUUID(scout), "Scout must be a valid UUID");
         require(amount == 1, "Can only mint 1 token per builder and scout");
         require(
             balanceOfScout(scout, tokenId) == 0,
@@ -336,20 +334,17 @@ contract ScoutGameStarterPackNFTImplementation is
 
     function updateERC20Contract(address newContract) external onlyAdmin {
         require(newContract != address(0), "Invalid address");
-        MemoryUtils.setAddress(
-            MemoryUtils.PAYMENT_ERC20_TOKEN_SLOT,
-            newContract
-        );
+        MemoryUtils._setAddress(MemoryUtils.CLAIMS_TOKEN_SLOT, newContract);
     }
 
     function getERC20Contract() external view returns (address) {
-        return MemoryUtils.getAddress(MemoryUtils.PAYMENT_ERC20_TOKEN_SLOT);
+        return MemoryUtils._getAddress(MemoryUtils.CLAIMS_TOKEN_SLOT);
     }
 
     function getTokenPurchasePrice(
         uint256 amount
     ) public view returns (uint256) {
-        uint256 priceIncrement = MemoryUtils.getUint256(
+        uint256 priceIncrement = MemoryUtils._getUint256(
             MemoryUtils.PRICE_INCREMENT_SLOT
         );
 
@@ -469,66 +464,28 @@ contract ScoutGameStarterPackNFTImplementation is
                 abi.encodePacked(
                     _getUriPrefix(),
                     "/",
-                    _uint2str(_tokenId),
+                    StringUtils._uint2str(_tokenId),
                     "/",
                     _getUriSuffix()
                 )
             );
     }
 
-    // Utility function to convert uint to string
-    function _uint2str(uint256 _i) internal pure returns (string memory) {
-        if (_i == 0) {
-            return "0";
-        }
-
-        uint256 temp = _i;
-        uint256 digits;
-
-        // Count the number of digits in the number
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-
-        // Create a byte array to store the characters of the number
-        bytes memory buffer = new bytes(digits);
-
-        // Extract each digit from the least significant to the most significant
-        while (_i != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(_i % 10)));
-            _i /= 10;
-        }
-
-        return string(buffer);
-    }
-
     function isValidUUID(string memory uuid) external pure returns (bool) {
-        return _isValidUUID(uuid);
-    }
-
-    function _isValidUUID(string memory uuid) internal pure returns (bool) {
-        bytes memory uuidBytes = bytes(uuid);
-        return
-            uuidBytes.length == 36 &&
-            uuidBytes[8] == "-" &&
-            uuidBytes[13] == "-" &&
-            uuidBytes[18] == "-" &&
-            uuidBytes[23] == "-";
+        return StringUtils._isValidUUID(uuid);
     }
 
     function name() external view returns (string memory) {
-        return MemoryUtils.getString(MemoryUtils.TOKEN_NAME);
+        return MemoryUtils._getString(MemoryUtils.TOKEN_NAME);
     }
 
     function symbol() external view returns (string memory) {
-        return MemoryUtils.getString(MemoryUtils.TOKEN_SYMBOL);
+        return MemoryUtils._getString(MemoryUtils.TOKEN_SYMBOL);
     }
 
     function setProceedsReceiver(address receiver) external onlyAdmin {
         require(receiver != address(0), "Invalid address");
-        MemoryUtils.setAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT, receiver);
+        MemoryUtils._setAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT, receiver);
     }
 
     function getProceedsReceiver() external view returns (address) {
@@ -536,14 +493,14 @@ contract ScoutGameStarterPackNFTImplementation is
     }
 
     function _getProceedsReceiver() internal view returns (address) {
-        return MemoryUtils.getAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT);
+        return MemoryUtils._getAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT);
     }
 
     function updatePriceIncrement(uint256 newIncrement) external onlyAdmin {
-        MemoryUtils.setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, newIncrement);
+        MemoryUtils._setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, newIncrement);
     }
 
     function getPriceIncrement() public view returns (uint256) {
-        return MemoryUtils.getUint256(MemoryUtils.PRICE_INCREMENT_SLOT);
+        return MemoryUtils._getUint256(MemoryUtils.PRICE_INCREMENT_SLOT);
     }
 }

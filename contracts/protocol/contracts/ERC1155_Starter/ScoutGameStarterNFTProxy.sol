@@ -1,20 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../SeasonOne/libs/MemoryUtils.sol";
+import "../../libs/MemoryUtils.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../libs/ScoutProtocolAccessControl.sol";
 
-contract ScoutGameStarterPackNFTUpgradeable {
+contract ScoutGameStarterNFTProxy is ScoutProtocolAccessControl {
     using MemoryUtils for bytes32;
-
-    // Modifier to restrict access to admin functions
-    modifier onlyAdmin() {
-        require(
-            MemoryUtils.isAdmin(msg.sender),
-            "Proxy: caller is not the admin"
-        );
-        _;
-    }
 
     constructor(
         address implementationAddress,
@@ -31,27 +23,24 @@ contract ScoutGameStarterPackNFTUpgradeable {
             paymentTokenAddress != address(0),
             "Invalid payment token address"
         );
-        MemoryUtils.setAddress(MemoryUtils.ADMIN_SLOT, msg.sender);
-        MemoryUtils.setAddress(
+        MemoryUtils._setAddress(MemoryUtils.ADMIN_SLOT, _msgSender());
+        MemoryUtils._setAddress(
             MemoryUtils.IMPLEMENTATION_SLOT,
             implementationAddress
         );
-        MemoryUtils.setAddress(
-            MemoryUtils.PAYMENT_ERC20_TOKEN_SLOT,
+        MemoryUtils._setAddress(
+            MemoryUtils.CLAIMS_TOKEN_SLOT,
             paymentTokenAddress
         );
-        MemoryUtils.setAddress(
+        MemoryUtils._setAddress(
             MemoryUtils.PROCEEDS_RECEIVER_SLOT,
             _proceedsReceiver
         );
 
-        MemoryUtils.setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, 2000000);
+        MemoryUtils._setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, 2000000);
 
-        MemoryUtils.setString(MemoryUtils.TOKEN_NAME, _tokenName);
-        MemoryUtils.setString(MemoryUtils.TOKEN_SYMBOL, _tokenSymbol);
-
-        // Init logic
-        MemoryUtils.setUint256(MemoryUtils.NEXT_TOKEN_ID_SLOT, 1);
+        MemoryUtils._setString(MemoryUtils.TOKEN_NAME, _tokenName);
+        MemoryUtils._setString(MemoryUtils.TOKEN_SYMBOL, _tokenSymbol);
     }
 
     // External wrapper for setting implementation
@@ -65,7 +54,7 @@ contract ScoutGameStarterPackNFTUpgradeable {
             newImplementation != address(0),
             "Invalid implementation address"
         );
-        MemoryUtils.setAddress(
+        MemoryUtils._setAddress(
             MemoryUtils.IMPLEMENTATION_SLOT,
             newImplementation
         );
@@ -78,19 +67,7 @@ contract ScoutGameStarterPackNFTUpgradeable {
 
     // Internal function for getting implementation address
     function _implementation() internal view returns (address) {
-        return MemoryUtils.getAddress(MemoryUtils.IMPLEMENTATION_SLOT);
-    }
-
-    function transferAdmin(
-        address _newAdmin
-    ) external onlyAdmin returns (address) {
-        require(_newAdmin != address(0), "Invalid address");
-        MemoryUtils.setAddress(MemoryUtils.ADMIN_SLOT, _newAdmin);
-        return _newAdmin;
-    }
-
-    function admin() external view returns (address) {
-        return MemoryUtils.getAddress(MemoryUtils.ADMIN_SLOT);
+        return MemoryUtils._getAddress(MemoryUtils.IMPLEMENTATION_SLOT);
     }
 
     // Helper function to extract revert message from delegatecall
@@ -105,7 +82,7 @@ contract ScoutGameStarterPackNFTUpgradeable {
     }
 
     fallback() external payable {
-        address impl = MemoryUtils.getAddress(MemoryUtils.IMPLEMENTATION_SLOT);
+        address impl = MemoryUtils._getAddress(MemoryUtils.IMPLEMENTATION_SLOT);
         require(impl != address(0), "Implementation not set");
 
         assembly {

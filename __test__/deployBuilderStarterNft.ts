@@ -11,7 +11,7 @@ export async function deployBuilderNftStarterPackContract({
 }: { USDCContractAddress?: Address; tokenName?: string; tokenSymbol?: string } = {}) {
   const { adminAccount: admin, thirdUserAccount: proceedsReceiverAccount } = await generateWallets();
 
-  const implementation = await viem.deployContract('ScoutGameStarterPackNFTImplementation', [], {
+  const implementation = await viem.deployContract('ScoutGameStarterNFTImplementation', [], {
     client: { wallet: admin }
   });
 
@@ -20,7 +20,7 @@ export async function deployBuilderNftStarterPackContract({
   const erc20Contract = USDCContractAddress || (await deployTestUSDC().then(({ USDC }) => USDC.address));
 
   const proxy = await viem.deployContract(
-    'ScoutGameStarterPackNFTUpgradeable',
+    'ScoutGameStarterNFTProxy',
     [implementation.address, erc20Contract as Address, proceedsReceiver, tokenName, tokenSymbol],
     {
       client: { wallet: admin }
@@ -29,7 +29,7 @@ export async function deployBuilderNftStarterPackContract({
 
   // Make the implementation ABI available to the proxy
   const proxyWithImplementationABI = await viem.getContractAt(
-    'ScoutGameStarterPackNFTImplementation', // Implementation ABI
+    'ScoutGameStarterNFTImplementation', // Implementation ABI
     proxy.address, // Proxy address
     { client: { wallet: admin } } // Use the admin account for interaction
   );
