@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../../SeasonOne/libs/MemoryUtils.sol";
+import "../../SeasonOne/libs/MemoryUtils.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract ScoutProtocolBuilderStarterPackNFTUpgradeable {
+contract ScoutGameStarterPackNFTUpgradeable {
     using MemoryUtils for bytes32;
 
     // Modifier to restrict access to admin functions

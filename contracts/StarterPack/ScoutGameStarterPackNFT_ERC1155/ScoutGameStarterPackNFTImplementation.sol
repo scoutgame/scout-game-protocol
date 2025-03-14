@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../../SeasonOne/libs/MemoryUtils.sol";
+import "../../SeasonOne/libs/MemoryUtils.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -34,7 +34,7 @@ library ImplementationStorage {
     }
 }
 
-contract ScoutProtocolBuilderStarterPackNFTImplementation is
+contract ScoutGameStarterPackNFTImplementation is
     Context,
     ERC165,
     IERC1155,

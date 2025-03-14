@@ -28,7 +28,7 @@ type ReadWriteWalletClient<
   PublicActions<transport, chain, account> & WalletActions<chain, account>
 >;
 
-export class ScoutProtocolBuilderStarterPackNFTImplementationClient {
+export class ScoutGameStarterPackNFTImplementationClient {
   private contractAddress: Address;
 
   private publicClient: PublicClient;

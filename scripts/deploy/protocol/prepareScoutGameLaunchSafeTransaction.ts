@@ -292,7 +292,7 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       scoutBuilderNFTProxyAddress
     );
     const scoutProtocolBuilderStarterPackNftProxyContract = await hre.viem.getContractAt(
-      'ScoutProtocolBuilderStarterPackNFTUpgradeable',
+      'ScoutGameStarterPackNFTUpgradeable',
       scoutBuilderStarterPackNFTProxyAddress
     );
     const erc20Contract = await hre.viem.getContractAt('ScoutTokenERC20Proxy', scoutTokenERC20ProxyAddress);
