@@ -317,7 +317,7 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
         expect(finalTotalSupply).toEqual(BigInt(4));
       });
 
-      it('Forwards 20% of the $SCOUT to the builder, and the remaining 80% to the proceeds receiver', async function () {
+      it('Forwards 20% of the $DEV to the builder, and the remaining 80% to the proceeds receiver', async function () {
         const { tokenId, builderAddress } = await registerBuilderToken({
           wallet: erc1155AdminAccount,
           nft: scoutProtocolBuilderNFT
