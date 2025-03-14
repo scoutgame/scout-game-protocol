@@ -47,6 +47,7 @@ fi
 echo -e "While this script runs, it will deploy the following contracts:"
 echo -e "ERC20"
 echo -e "Builder NFT"
+echo -e "Builder Starter Pack NFT"
 echo -e "Vesting"
 echo -e "EAS Resolver"
 echo -e "Protocol"
@@ -59,6 +60,9 @@ continue_or_exit "ERC20 deployment completed."
 
 npm run scout:deploy:buildernft $NETWORK -- --deployment $DEPLOYMENT_NAME || exit 1
 continue_or_exit "Builder NFT deployment completed."
+
+npm run scout:deploy:starterpack $NETWORK -- --deployment $DEPLOYMENT_NAME || exit 1
+continue_or_exit "Builder Starter Pack NFT deployment completed."
 
 npm run scout:deploy:vesting $NETWORK -- --deployment $DEPLOYMENT_NAME || exit 1
 continue_or_exit "Vesting deployment completed."

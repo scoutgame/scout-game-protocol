@@ -331,18 +331,6 @@ contract ScoutGameStarterPackNFTImplementation is
         );
         require(account != address(0), "Invalid account address");
 
-        uint256 MAX_MINT_AMOUNT = 3;
-
-        require(amount > 0, "Amount must be greater than 0");
-
-        require(amount <= MAX_MINT_AMOUNT, "Amount exceeds max mint amount");
-
-        uint256 _totalMinted = totalMinted(scout);
-        require(
-            _totalMinted + amount <= MAX_MINT_AMOUNT,
-            "Amount exceeds max mint amount for 1 user"
-        );
-
         _getBuilderIdForToken(tokenId);
     }
 
