@@ -5,7 +5,7 @@ import { randomBigIntFromInterval } from '../../../../../lib/utils';
 import { loadContractWithStarterPackFixtures } from '../../../../fixtures';
 import { generateWallets, walletFromKey } from '../../../../generateWallets';
 
-describe('ScoutGameStarterPackNFTImplementation', function () {
+describe('ScoutGameStarterNFTImplementation', function () {
   describe('registerBuilderToken()', function () {
     describe('effects', function () {
       it('Register a new builder token using a builderId and a specific tokenId', async function () {

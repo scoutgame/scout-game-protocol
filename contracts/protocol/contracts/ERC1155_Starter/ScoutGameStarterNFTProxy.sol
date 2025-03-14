@@ -5,7 +5,7 @@ import "../../libs/MemoryUtils.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../libs/ScoutProtocolAccessControl.sol";
 
-contract ScoutGameStarterPackNFTProxy is ScoutProtocolAccessControl {
+contract ScoutGameStarterNFTProxy is ScoutProtocolAccessControl {
     using MemoryUtils for bytes32;
 
     constructor(

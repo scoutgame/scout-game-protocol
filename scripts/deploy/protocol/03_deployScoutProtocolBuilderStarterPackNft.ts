@@ -39,7 +39,7 @@ task(
 
     // Deploy the implementation contract first
 
-    const implementation = await hre.viem.deployContract('ScoutGameStarterPackNFTImplementation', [], {
+    const implementation = await hre.viem.deployContract('ScoutGameStarterNFTImplementation', [], {
       client: {
         wallet: walletClient
       }
@@ -55,11 +55,11 @@ task(
     }
 
     outputContractAddress({
-      name: 'ScoutGameStarterPackNFTImplementation',
+      name: 'ScoutGameStarterNFTImplementation',
       address: implementationAddress,
       network: getConnectorKey(connector.chain.id),
       contractArtifactSource:
-        'contracts/protocol/contracts/StarterPack/ScoutGameStarterPackNFTImplementation.sol:ScoutGameStarterPackNFTImplementation',
+        'contracts/protocol/contracts/StarterPack/ScoutGameStarterNFTImplementation.sol:ScoutGameStarterNFTImplementation',
       deployArgs: [],
       deploymentName
     });
@@ -112,7 +112,7 @@ task(
       string
     ];
 
-    const proxyContract = await hre.viem.deployContract('ScoutGameStarterPackNFTProxy', deployArgs, {
+    const proxyContract = await hre.viem.deployContract('ScoutGameStarterNFTProxy', deployArgs, {
       client: {
         wallet: walletClient
       }
@@ -123,10 +123,10 @@ task(
     console.log('ERC1155 Starter Pack Proxy contract deployed at:', proxyAddress);
 
     outputContractAddress({
-      name: 'ScoutGameStarterPackNFTProxy',
+      name: 'ScoutGameStarterNFTProxy',
       address: proxyAddress,
       contractArtifactSource:
-        'contracts/protocol/contracts/StarterPack/ScoutGameStarterPackNFTProxy.sol:ScoutGameStarterPackNFTProxy',
+        'contracts/protocol/contracts/StarterPack/ScoutGameStarterNFTProxy.sol:ScoutGameStarterNFTProxy',
       network: getConnectorKey(connector.chain.id),
       deployArgs: deployArgs.slice(),
       deploymentName

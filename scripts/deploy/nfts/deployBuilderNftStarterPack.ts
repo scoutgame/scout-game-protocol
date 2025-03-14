@@ -65,17 +65,14 @@ task('deployScoutGameStarterPackNFT', 'Deploys or updates the BuilderNFT Starter
         }
       ]);
       implementationAddress = existingImplementationAddress as Address;
-      const implementation = await hre.viem.getContractAt(
-        'ScoutGameStarterPackNFTImplementation',
-        implementationAddress
-      );
+      const implementation = await hre.viem.getContractAt('ScoutGameStarterNFTImplementation', implementationAddress);
       implementationABI = implementation.abi;
       console.log('Using existing implementation at:', implementationAddress);
     } else {
       // Deploy the implementation contract first
       console.log('Deploying the implementation contract...');
 
-      const implementation = await hre.viem.deployContract('ScoutGameStarterPackNFTImplementation', [], {
+      const implementation = await hre.viem.deployContract('ScoutGameStarterNFTImplementation', [], {
         client: {
           wallet: walletClient
         }
@@ -95,7 +92,7 @@ task('deployScoutGameStarterPackNFT', 'Deploys or updates the BuilderNFT Starter
       }
 
       fs.writeFileSync(
-        path.resolve('abis', 'ScoutGameStarterPackNFTImplementation.json'),
+        path.resolve('abis', 'ScoutGameStarterNFTImplementation.json'),
         JSON.stringify(implementationABI, null, 2)
       );
     }
@@ -227,7 +224,7 @@ task('deployScoutGameStarterPackNFT', 'Deploys or updates the BuilderNFT Starter
 
       const deployArgs = [...deployConfigArgs, ...tokenInfoArgs] as [Address, Address, Address, string, string];
 
-      const newProxyContract = await hre.viem.deployContract('ScoutGameStarterPackNFTProxy', deployArgs, {
+      const newProxyContract = await hre.viem.deployContract('ScoutGameStarterNFTProxy', deployArgs, {
         client: {
           wallet: walletClient
         }
