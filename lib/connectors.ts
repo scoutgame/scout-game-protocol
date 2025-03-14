@@ -155,12 +155,16 @@ export const connectors = {
   base: {
     rpcUrl: 'https://mainnet.base.org',
     chain: base,
+    foundryCreate2Deployer: '0x4e59b44847b379578588920ca78fbf26c0b4956c',
     easContract: NULL_EVM_ADDRESS,
     luckyStarCoinContract: NULL_EVM_ADDRESS,
     builderNFTContract: '0x278cc8861cfc93ea47c9e89b1876d0def2037c27',
     usdcContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     easAttestationContract: '0x4200000000000000000000000000000000000021',
-    easBaseUrl: 'https://base.easscan.org'
+    easBaseUrl: 'https://base.easscan.org',
+    sablier: {
+      SablierV2LockupTranched: '0xf4937657Ed8B3f3cB379Eed47b8818eE947BEb1e'
+    }
   } as Connector,
   supersimL1: {
     rpcUrl: 'http://127.0.0.1:8545',
