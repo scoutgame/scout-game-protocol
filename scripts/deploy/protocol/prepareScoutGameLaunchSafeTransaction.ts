@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 import { log } from '@charmverse/core/log';
 import SafeApiKit from '@safe-global/api-kit';
 import Safe from '@safe-global/protocol-kit';
@@ -147,7 +150,7 @@ const lockupAbi = [
   }
 ];
 
-task('prepareScoutGameLaunchSafeTransaction', 'Deploys or updates the Scout Game ERC20 contract').setAction(
+task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to launch the Scout Game').setAction(
   async (taskArgs, hre) => {
     const connector = getConnectorFromHardhatRuntimeEnvironment(hre);
 
@@ -169,7 +172,8 @@ task('prepareScoutGameLaunchSafeTransaction', 'Deploys or updates the Scout Game
       scoutProtocolAddress,
       scoutProtocolBuilderNftMinterAddress,
       scoutTokenERC20ProxyAddress,
-      season01ProtocolTokenAllocation
+      season01ProtocolTokenAllocation,
+      transactionType
     } = await inquirer.prompt([
       {
         type: 'input',
@@ -250,6 +254,12 @@ task('prepareScoutGameLaunchSafeTransaction', 'Deploys or updates the Scout Game
         name: 'firstTokenDistributionTimestamp',
         message: '[Date] Enter the first token distribution timestamp (UTC in seconds):',
         validate: (input) => (input ?? 0) > 0 || 'Please enter a valid timestamp'
+      },
+      {
+        type: 'list',
+        name: 'transactionType',
+        message: 'Select the type of transaction to prepare:',
+        choices: ['Propose', 'Export', 'Both']
       }
     ]);
 
@@ -332,9 +342,17 @@ task('prepareScoutGameLaunchSafeTransaction', 'Deploys or updates the Scout Game
       value: '0'
     };
 
-    await apiKit.estimateSafeTransaction(safeAddress, erc20TxData);
+    const existingContract = await hre.viem.getContractAt('ScoutTokenERC20Implementation', scoutTokenERC20ProxyAddress);
 
-    safeTransactionData.push(erc20TxData);
+    const isERC20Initialized = await existingContract.read.isInitialized();
+
+    if (!isERC20Initialized) {
+      // await apiKit.estimateSafeTransaction(safeAddress, erc20TxData);
+
+      safeTransactionData.push(erc20TxData);
+    } else {
+      console.log('ERC20 is already initialized');
+    }
 
     // Phase 2 - Prepare the Builder NFT contract
 
@@ -448,29 +466,67 @@ task('prepareScoutGameLaunchSafeTransaction', 'Deploys or updates the Scout Game
       throw new Error('No valid transactions to propose');
     }
 
-    const safeTransaction = await protocolKitProposer.createTransaction({
-      transactions: safeTransactionData
-    });
+    const proposeTransaction = !!(transactionType === 'Propose' || transactionType === 'Both');
+    const exportTransaction = !!(transactionType === 'Export' || transactionType === 'Both');
 
-    log.info('Generated safe transaction input data');
+    if (exportTransaction) {
+      // Create and export transaction batch JSON
+      // Extract contract methods when possible
+      const transactionsWithMethods = safeTransactionData.map((tx) => {
+        // Basic transaction data
+        const txData = {
+          to: tx.to,
+          value: tx.value,
+          data: tx.data || null,
+          contractMethod: null,
+          contractInputsValues: null
+        };
 
-    const safeTxHash = await protocolKitProposer.getTransactionHash(safeTransaction);
-    const signature = await protocolKitProposer.signHash(safeTxHash);
+        // Try to extract method information if available
+        // This is a simplified approach - in a production environment you might want to
+        // decode the function call more precisely using the ABI
+        return txData;
+      });
 
-    const proposerAddress = privateKeyToAccount(PRIVATE_KEY).address;
+      const txBatchData = {
+        version: '1.0',
+        chainId: connector.chain.id.toString(),
+        createdAt: Date.now(),
+        meta: {
+          txBuilderVersion: '1.17.1'
+        },
+        transactions: transactionsWithMethods
+      };
 
-    log.info(`Proposing transaction to safe with hash ${safeTxHash}`);
+      // Write to file
+      const filePath = path.join(process.cwd(), 'scout-protocol-tx-batch.json');
 
-    // Propose transaction to the service
-    await apiKit.proposeTransaction({
-      safeAddress,
-      safeTransactionData: safeTransaction.data,
-      safeTxHash,
-      senderAddress: proposerAddress,
-      senderSignature: signature.data
-    });
+      fs.writeFileSync(filePath, JSON.stringify(txBatchData, null, 2));
 
-    log.info(`Transaction proposed to safe`, { safeTxHash, proposerAddress, safeAddress });
+      log.info(`Transaction batch exported to ${filePath}`);
+    }
+
+    if (proposeTransaction) {
+      const safeTransaction = await protocolKitProposer.createTransaction({
+        transactions: safeTransactionData
+      });
+
+      const safeTxHash = await protocolKitProposer.getTransactionHash(safeTransaction);
+      const signature = await protocolKitProposer.signHash(safeTxHash);
+
+      const proposerAddress = privateKeyToAccount(PRIVATE_KEY).address;
+
+      // Propose transaction to the service
+      await apiKit.proposeTransaction({
+        safeAddress,
+        safeTransactionData: safeTransaction.data,
+        safeTxHash,
+        senderAddress: proposerAddress,
+        senderSignature: signature.data
+      });
+
+      log.info(`Transaction proposed to safe`, { safeTxHash, proposerAddress, safeAddress });
+    }
   }
 );
 

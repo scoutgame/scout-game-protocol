@@ -14,7 +14,7 @@
     "deploybuilders:pres02": "npm run compile && npx hardhat deployBuilderNFTPreSeason02 --network",
     "deploybuilders:starterpack": "npm run compile && npx hardhat deployScoutGameStarterPackNFT --network",
     "scout:deploy:season01": "npm run compile && chmod +x ./scripts/shell/deployseason01.sh && ./scripts/shell/deployseason01.sh",
-    "scout:verify:season01": "npm run compile && npx hardhat verifyDeployedContracts --network",
+    "scout:verify:season01": "npm run compile && npx hardhat verifyContracts --network",
     "scout:launch:season01": "npx hardhat prepareScoutGameLaunchSafeTransaction --network",
     "deploy:create2deployer": "npx hardhat deployFoundryCreate2Deployer --network",
     "proxy:update": "npx hardhat updateProxyImplementation --network",
