@@ -325,13 +325,7 @@ contract ScoutProtocolBuilderNFTImplementation is
             "Token supply limit reached"
         );
 
-        require(account != address(0), "Invalid account address");
-
-        string memory builderId = ScoutProtocolBuilderNFTStorage
-            .getTokenToBuilderRegistry(tokenId);
-
-        // Throws if token ID is not registered
-        require(bytes(builderId).length != 0, "Token ID not registered");
+        _validateMint(account, tokenId);
 
         uint256 _price = getTokenPurchasePrice(tokenId, amount);
         address _paymentToken = MemoryUtils._getAddress(
@@ -343,14 +337,7 @@ contract ScoutProtocolBuilderNFTImplementation is
 
         forwardProceeds(tokenId, _price);
 
-        ScoutProtocolBuilderNFTStorage.increaseBalance(
-            account,
-            tokenId,
-            amount
-        );
-
-        // Emit TransferSingle event
-        emit TransferSingle(_msgSender(), address(0), account, tokenId, amount);
+        _mintTo(account, tokenId, amount);
     }
 
     function forwardProceeds(uint256 tokenId, uint256 cost) internal {
@@ -443,6 +430,31 @@ contract ScoutProtocolBuilderNFTImplementation is
         return MemoryUtils._getAddress(MemoryUtils.MINTER_SLOT);
     }
 
+    function mintTo(
+        address account,
+        uint256 tokenId,
+        uint256 amount
+    ) external onlyAdminOrMinter {
+        _validateMint(account, tokenId);
+        _mintTo(account, tokenId, amount);
+    }
+
+    function _mintTo(
+        address account,
+        uint256 tokenId,
+        uint256 amount
+    ) internal {
+        // Mint tokens
+        ScoutProtocolBuilderNFTStorage.increaseBalance(
+            account,
+            tokenId,
+            amount
+        );
+
+        // Emit TransferSingle event
+        emit TransferSingle(_msgSender(), address(0), account, tokenId, amount);
+    }
+
     function ERC20Token() public view returns (address) {
         return MemoryUtils._getAddress(MemoryUtils.CLAIMS_TOKEN_SLOT);
     }
@@ -468,7 +480,7 @@ contract ScoutProtocolBuilderNFTImplementation is
 
     function getBuilderIdForToken(
         uint256 tokenId
-    ) external view returns (string memory) {
+    ) public view returns (string memory) {
         string memory builderId = ScoutProtocolBuilderNFTStorage
             .getTokenToBuilderRegistry(tokenId);
         require(bytes(builderId).length > 0, "Token not yet allocated");
@@ -601,5 +613,10 @@ contract ScoutProtocolBuilderNFTImplementation is
             MemoryUtils._getUint256(
                 ScoutProtocolBuilderNFTStorage.MAX_SUPPLY_SLOT
             );
+    }
+
+    function _validateMint(address account, uint256 tokenId) internal view {
+        require(account != address(0), "Invalid account address");
+        getBuilderIdForToken(tokenId);
     }
 }
