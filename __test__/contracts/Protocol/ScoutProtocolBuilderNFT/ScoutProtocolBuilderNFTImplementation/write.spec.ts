@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { v4 as uuid } from 'uuid';
 import type { Address } from 'viem';
-import { parseEventLogs } from 'viem';
+import { getAddress, parseEventLogs } from 'viem';
 
 import type { ScoutProtocolBuilderNFTFixture } from '../../../../deployScoutProtocolBuilderNft';
 import type { ScoutTokenERC20TestFixture } from '../../../../deployScoutTokenERC20';
