@@ -89,7 +89,7 @@ const builderNftAbi = [
   }
 ];
 
-const builderStarterPackNftAbi = [
+const builderStarterNftAbi = [
   {
     inputs: [
       {
@@ -117,6 +117,19 @@ const builderStarterPackNftAbi = [
       }
     ],
     name: 'setBaseUri',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'newMaxSupply',
+        type: 'uint256'
+      }
+    ],
+    name: 'setMaxSupplyPerToken',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'
@@ -187,9 +200,10 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       firstTokenDistributionTimestamp,
       nftPrefix,
       nftSuffix,
+      nftMaxSupply,
       sablierLockupTranchedAddress,
       scoutBuilderNFTProxyAddress,
-      scoutBuilderStarterPackNFTProxyAddress,
+      scoutBuilderStarterNFTProxyAddress,
       scoutProtocolAddress,
       scoutProtocolBuilderNftMinterAddress,
       scoutTokenERC20ProxyAddress,
@@ -210,7 +224,7 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       },
       {
         type: 'input',
-        name: 'scoutBuilderStarterPackNFTProxyAddress',
+        name: 'scoutBuilderStarterNFTProxyAddress',
         message: '[Contract] Enter the Scout Builder Starter Pack NFT ERC1155 Proxy Address:',
         validate: (input) => isAddress(input) || 'Please enter a valid address'
       },
@@ -239,6 +253,12 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
         name: 'nftSuffix',
         message: '[Filename] Enter the NFT metadata suffix:',
         default: 'metadata.json'
+      },
+      {
+        type: 'number',
+        name: 'nftMaxSupply',
+        message: '[Max Supply] Enter the NFT max supply:',
+        validate: (input) => (input ?? 0) > 0 || 'Please enter a valid max supply'
       },
       {
         type: 'input',
@@ -291,9 +311,9 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       'ScoutProtocolBuilderNFTProxy',
       scoutBuilderNFTProxyAddress
     );
-    const scoutProtocolBuilderStarterPackNftProxyContract = await hre.viem.getContractAt(
-      'ScoutGameStarterPackNFTUpgradeable',
-      scoutBuilderStarterPackNFTProxyAddress
+    const scoutProtocolBuilderStarterNftProxyContract = await hre.viem.getContractAt(
+      'ScoutGameStarterNFTProxy',
+      scoutBuilderStarterNFTProxyAddress
     );
     const erc20Contract = await hre.viem.getContractAt('ScoutTokenERC20Proxy', scoutTokenERC20ProxyAddress);
     const protocolContract = await hre.viem.getContractAt('ScoutProtocolProxy', scoutProtocolAddress);
@@ -309,13 +329,13 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       );
     }
 
-    const builderStarterPackNftImplementation = await scoutProtocolBuilderStarterPackNftProxyContract.read
+    const builderStarterNftImplementation = await scoutProtocolBuilderStarterNftProxyContract.read
       .implementation()
       .catch(() => {
         console.error('Error verifying Builder Starter Pack NFT implementation');
         return null;
       });
-    if (!builderStarterPackNftImplementation || !isAddress(builderStarterPackNftImplementation)) {
+    if (!builderStarterNftImplementation || !isAddress(builderStarterNftImplementation)) {
       throw new Error(
         'Invalid Builder Starter Pack NFT proxy address. Make sure you passed the proxy, not the implementation address.'
       );
@@ -431,39 +451,56 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
 
     // Phase 4 - Prepare the Builder Starter Pack NFT contract
 
-    const encodedBuilderStarterPackNftSetMinterData = encodeFunctionData({
-      abi: builderStarterPackNftAbi,
+    const encodedBuilderStarterNftSetMinterData = encodeFunctionData({
+      abi: builderStarterNftAbi,
       functionName: 'setMinter',
       args: [scoutProtocolBuilderNftMinterAddress]
     });
 
-    const builderStarterPackNftSetMinterTxData = {
-      to: getAddress(scoutBuilderStarterPackNFTProxyAddress),
-      data: encodedBuilderStarterPackNftSetMinterData,
+    const builderStarterNftSetMinterTxData = {
+      to: getAddress(scoutBuilderStarterNFTProxyAddress),
+      data: encodedBuilderStarterNftSetMinterData,
       operation: OperationType.Call,
       value: '0'
     };
 
     await apiKit.estimateSafeTransaction(safeAddress, builderNftSetMinterTxData);
 
-    safeTransactionData.push(builderStarterPackNftSetMinterTxData);
+    safeTransactionData.push(builderStarterNftSetMinterTxData);
 
-    const encodedBuilderStarterPackNftSetBaseUriData = encodeFunctionData({
-      abi: builderStarterPackNftAbi,
+    const encodedBuilderStarterNftSetBaseUriData = encodeFunctionData({
+      abi: builderStarterNftAbi,
       functionName: 'setBaseUri',
       args: [nftPrefix, nftSuffix]
     });
 
-    const builderStarterPackNftSetBaseUriTxData = {
-      to: getAddress(scoutBuilderStarterPackNFTProxyAddress),
-      data: encodedBuilderStarterPackNftSetBaseUriData,
+    const builderStarterNftSetBaseUriTxData = {
+      to: getAddress(scoutBuilderStarterNFTProxyAddress),
+      data: encodedBuilderStarterNftSetBaseUriData,
       operation: OperationType.Call,
       value: '0'
     };
 
     await apiKit.estimateSafeTransaction(safeAddress, builderNftSetBaseUriTxData);
 
-    safeTransactionData.push(builderStarterPackNftSetBaseUriTxData);
+    safeTransactionData.push(builderStarterNftSetBaseUriTxData);
+
+    const encodedERC1155SetMaxSupplyPerTokenData = encodeFunctionData({
+      abi: builderNftAbi,
+      functionName: 'setMaxSupplyPerToken',
+      args: [nftMaxSupply]
+    });
+
+    const nftSetMaxSupplyPerTokenTxData = {
+      to: getAddress(scoutBuilderNFTProxyAddress),
+      data: encodedERC1155SetMaxSupplyPerTokenData,
+      operation: OperationType.Call,
+      value: '0'
+    };
+
+    await apiKit.estimateSafeTransaction(safeAddress, nftSetMaxSupplyPerTokenTxData);
+
+    safeTransactionData.push(nftSetMaxSupplyPerTokenTxData);
 
     // Phase 3 - Configure the EAS Attester Wallet
 
