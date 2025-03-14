@@ -86,7 +86,7 @@ describe('ScoutGameStarterNFTImplementation', function () {
           builderNftContract.write.registerBuilderToken([builderId, randomBigIntFromInterval()], {
             account: userAccount.account
           })
-        ).rejects.toThrow('Proxy: caller is not the admin');
+        ).rejects.toThrow('Caller is not the admin');
       });
 
       it('Minter wallet can register a builder token', async function () {
@@ -516,7 +516,7 @@ describe('ScoutGameStarterNFTImplementation', function () {
         const newBaseUri = 'https://newbase.uri/';
         await expect(
           builderNftContract.write.setBaseUri([newBaseUri], { account: userAccount.account })
-        ).rejects.toThrow('Proxy: caller is not the admin');
+        ).rejects.toThrow('Caller is not the admin');
       });
     });
 
@@ -680,7 +680,7 @@ describe('ScoutGameStarterNFTImplementation', function () {
           builderNftContract.write.burn([testUserAddress, BigInt(1), BigInt(5), scoutId], {
             account: secondUserAccount.account
           })
-        ).rejects.toThrow('Proxy: caller is not the admin');
+        ).rejects.toThrow('Caller is not the admin');
       });
     });
 
@@ -838,7 +838,7 @@ describe('ScoutGameStarterNFTImplementation', function () {
           builderNftContract.write.mintTo([testUserAddress, tokenId, amount, scoutId], {
             account: secondUserAccount.account
           })
-        ).rejects.toThrow('Proxy: caller is not the admin');
+        ).rejects.toThrow('Caller is not the admin');
       });
 
       it('Minter can mint tokens to an account', async function () {
@@ -930,7 +930,7 @@ describe('ScoutGameStarterNFTImplementation', function () {
         const newPrefix = 'https://newprefix.uri';
         await expect(
           builderNftContract.write.setUriPrefix([newPrefix], { account: userAccount.account })
-        ).rejects.toThrow('Proxy: caller is not the admin');
+        ).rejects.toThrow('Caller is not the admin');
 
         // Verify the prefix hasn't changed
         const currentPrefix = await builderNftContract.read.getUriPrefix();
@@ -981,7 +981,7 @@ describe('ScoutGameStarterNFTImplementation', function () {
         const newSuffix = 'metadata.json';
         await expect(
           builderNftContract.write.setUriSuffix([newSuffix], { account: userAccount.account })
-        ).rejects.toThrow('Proxy: caller is not the admin');
+        ).rejects.toThrow('Caller is not the admin');
 
         // Verify the suffix hasn't changed
         const currentSuffix = await builderNftContract.read.getUriSuffix();
@@ -1033,7 +1033,7 @@ describe('ScoutGameStarterNFTImplementation', function () {
         const newSuffix = 'metadata.json';
         await expect(
           builderNftContract.write.setUriPrefixAndSuffix([newPrefix, newSuffix], { account: userAccount.account })
-        ).rejects.toThrow('Proxy: caller is not the admin');
+        ).rejects.toThrow('Caller is not the admin');
 
         // Verify the prefix and suffix haven't changed
         const currentPrefix = await builderNftContract.read.getUriPrefix();
@@ -1106,7 +1106,7 @@ describe('ScoutGameStarterNFTImplementation', function () {
         const newMinter = userAccount.account.address;
 
         await expect(builderNftContract.write.setMinter([newMinter], { account: userAccount.account })).rejects.toThrow(
-          'Proxy: caller is not the admin'
+          'Caller is not the admin'
         );
       });
     });
