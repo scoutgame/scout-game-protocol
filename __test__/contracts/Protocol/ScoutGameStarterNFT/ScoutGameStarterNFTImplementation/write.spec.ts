@@ -46,7 +46,7 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
     });
 
     describe('events', function () {
-      it('Emits DevTokenRegistered event new tokenId and builderId', async function () {
+      it('Emits TokenRegistered event new tokenId and builderId', async function () {
         const {
           builderNftStarterPack: { builderNftContract, builderNftAdminAccount: account }
         } = await loadContractWithStarterPackFixtures();
@@ -61,10 +61,10 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
         const parsedLogs = parseEventLogs({
           abi: builderNftContract.abi,
           logs: receipt.logs,
-          eventName: ['DevTokenRegistered']
+          eventName: ['TokenRegistered']
         });
 
-        const decodedEvent = parsedLogs.find((log) => log.eventName === 'DevTokenRegistered');
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'TokenRegistered');
 
         expect(decodedEvent).toBeDefined();
 

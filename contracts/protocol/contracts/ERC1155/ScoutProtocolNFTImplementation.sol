@@ -26,7 +26,7 @@ contract ScoutProtocolNFTImplementation is
     using Address for address;
 
     // Events
-    event DevTokenRegistered(uint256 tokenId, string builderId);
+    event TokenRegistered(uint256 tokenId, string builderId);
 
     modifier onlyAdminOrMinter() {
         require(
@@ -296,8 +296,8 @@ contract ScoutProtocolNFTImplementation is
 
         _updateBuilderTokenAddress(_nextTokenId, account);
 
-        // Emit DevTokenRegistered event
-        emit DevTokenRegistered(_nextTokenId, builderId);
+        // Emit TokenRegistered event
+        emit TokenRegistered(_nextTokenId, builderId);
 
         // Increment the next token ID
         ScoutProtocolNFTStorage.incrementNextTokenId();

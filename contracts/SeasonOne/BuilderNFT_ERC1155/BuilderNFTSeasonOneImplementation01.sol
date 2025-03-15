@@ -42,7 +42,7 @@ contract BuilderNFTSeasonOneImplementation01 is
 
     // Events
     event BuilderScouted(uint256 tokenId, uint256 amount, string scout);
-    event DevTokenRegistered(uint256 tokenId, string builderId);
+    event TokenRegistered(uint256 tokenId, string builderId);
 
     modifier onlyAdmin() {
         require(
@@ -97,8 +97,8 @@ contract BuilderNFTSeasonOneImplementation01 is
             builderId
         ] = nextTokenId;
 
-        // Emit DevTokenRegistered event
-        emit DevTokenRegistered(nextTokenId, builderId);
+        // Emit TokenRegistered event
+        emit TokenRegistered(nextTokenId, builderId);
 
         // Increment the next token ID
         MemoryUtils.setUint256(MemoryUtils.NEXT_TOKEN_ID_SLOT, nextTokenId + 1);

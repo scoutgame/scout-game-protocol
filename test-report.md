@@ -196,7 +196,7 @@
   - Revert if the builderId is empty
   - Revert if the builderId is an invalid uuid
 - **Events**:
-  - Emits DevTokenRegistered event new tokenId and builderId
+  - Emits TokenRegistered event new tokenId and builderId
 
 #### rolloverMinterWallet()
 

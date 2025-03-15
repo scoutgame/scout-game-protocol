@@ -70,7 +70,7 @@
         "type": "string"
       }
     ],
-    "name": "DevTokenRegistered",
+    "name": "TokenRegistered",
     "type": "event"
   },
   {

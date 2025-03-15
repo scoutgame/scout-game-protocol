@@ -48,7 +48,7 @@ contract ScoutProtocolStarterNFTImplementation is
 
     // Events
     event BuilderScouted(uint256 tokenId, uint256 amount, string scout);
-    event DevTokenRegistered(uint256 tokenId, string builderId);
+    event TokenRegistered(uint256 tokenId, string builderId);
 
     modifier onlyAdminOrMinter() {
         require(
@@ -101,8 +101,8 @@ contract ScoutProtocolStarterNFTImplementation is
             builderId
         ] = builderTokenId;
 
-        // Emit DevTokenRegistered event
-        emit DevTokenRegistered(builderTokenId, builderId);
+        // Emit TokenRegistered event
+        emit TokenRegistered(builderTokenId, builderId);
 
         ImplementationStorage.layout().totalBuilders++;
     }

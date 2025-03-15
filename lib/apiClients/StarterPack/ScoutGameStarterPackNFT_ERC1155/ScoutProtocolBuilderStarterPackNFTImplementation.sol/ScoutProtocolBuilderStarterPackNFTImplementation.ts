@@ -675,7 +675,7 @@ export class ScoutGameStarterPackImplementationClient {
           type: 'string'
         }
       ],
-      name: 'DevTokenRegistered',
+      name: 'TokenRegistered',
       type: 'event'
     },
     {

@@ -714,7 +714,7 @@ export class ScoutProtocolNFTImplementationClient {
           type: 'string'
         }
       ],
-      name: 'DevTokenRegistered',
+      name: 'TokenRegistered',
       type: 'event'
     },
     {

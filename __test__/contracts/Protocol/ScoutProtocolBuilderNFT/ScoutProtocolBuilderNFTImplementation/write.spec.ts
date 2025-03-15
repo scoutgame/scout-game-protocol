@@ -107,7 +107,7 @@ describe('ScoutProtocolNFTImplementation', function () {
     });
 
     describe('events', function () {
-      it('Emits DevTokenRegistered event new tokenId and builderId', async function () {
+      it('Emits TokenRegistered event new tokenId and builderId', async function () {
         const builderId = uuid(); // Sample UUID
         const builderAddress = randomEthereumAddress();
         const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken(
@@ -123,10 +123,10 @@ describe('ScoutProtocolNFTImplementation', function () {
         const parsedLogs = parseEventLogs({
           abi: scoutProtocolBuilderNFT.builderNftContract.abi,
           logs: receipt.logs,
-          eventName: ['DevTokenRegistered']
+          eventName: ['TokenRegistered']
         });
 
-        const decodedEvent = parsedLogs.find((log) => log.eventName === 'DevTokenRegistered');
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'TokenRegistered');
 
         expect(decodedEvent).toBeDefined();
 
