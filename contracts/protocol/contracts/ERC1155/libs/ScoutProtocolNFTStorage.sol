@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-library ScoutProtocolBuilderNFTStorage {
+library ScoutProtocolNFTStorage {
     struct Layout {
         mapping(uint256 => mapping(address => uint256)) balances;
         mapping(uint256 => uint256) totalSupply;

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../../libs/MemoryUtils.sol";
-import "./libs/ScoutProtocolBuilderNFTStorage.sol";
+import "./libs/ScoutProtocolNFTStorage.sol";
 import "../../libs/ScoutProtocolAccessControl.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "../ERC20/ScoutTokenERC20Implementation.sol";
@@ -11,9 +11,9 @@ interface IImplementation {
     function acceptUpgrade() external returns (address);
 }
 
-contract ScoutProtocolBuilderNFTProxy is Context, ScoutProtocolAccessControl {
+contract ScoutProtocolNFTProxy is Context, ScoutProtocolAccessControl {
     using MemoryUtils for bytes32;
-    using ScoutProtocolBuilderNFTStorage for bytes32;
+    using ScoutProtocolNFTStorage for bytes32;
 
     constructor(
         address _implementationAddress,
@@ -58,7 +58,7 @@ contract ScoutProtocolBuilderNFTProxy is Context, ScoutProtocolAccessControl {
         MemoryUtils._setString(MemoryUtils.TOKEN_NAME, _tokenName);
         MemoryUtils._setString(MemoryUtils.TOKEN_SYMBOL, _tokenSymbol);
 
-        ScoutProtocolBuilderNFTStorage.incrementNextTokenId();
+        ScoutProtocolNFTStorage.incrementNextTokenId();
     }
 
     function setImplementation(address newImplementation) external onlyAdmin {

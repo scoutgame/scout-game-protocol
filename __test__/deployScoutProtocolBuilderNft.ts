@@ -14,14 +14,14 @@ export async function deployScoutProtocolBuilderNftContract({
 }) {
   const { adminAccount: admin, thirdUserAccount: proceedsReceiverAccount } = await generateWallets();
 
-  const implementation = await viem.deployContract('ScoutProtocolBuilderNFTImplementation', [], {
+  const implementation = await viem.deployContract('ScoutProtocolNFTImplementation', [], {
     client: { wallet: admin }
   });
 
   const proceedsReceiver = proceedsReceiverAccount.account.address;
 
   const proxy = await viem.deployContract(
-    'ScoutProtocolBuilderNFTProxy',
+    'ScoutProtocolNFTProxy',
     [implementation.address, ScoutScoutTokenERC20Address, proceedsReceiver, tokenName, tokenSymbol],
     {
       client: { wallet: admin }
@@ -30,7 +30,7 @@ export async function deployScoutProtocolBuilderNftContract({
 
   // Make the implementation ABI available to the proxy
   const proxyWithImplementationABI = await viem.getContractAt(
-    'ScoutProtocolBuilderNFTImplementation', // Implementation ABI
+    'ScoutProtocolNFTImplementation', // Implementation ABI
     proxy.address, // Proxy address
     { client: { wallet: admin } } // Use the admin account for interaction
   );

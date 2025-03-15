@@ -36,7 +36,7 @@ library ImplementationStorage {
     }
 }
 
-contract ScoutGameStarterNFTImplementation is
+contract ScoutProtocolStarterNFTImplementation is
     Context,
     ERC165,
     IERC1155,
@@ -48,7 +48,7 @@ contract ScoutGameStarterNFTImplementation is
 
     // Events
     event BuilderScouted(uint256 tokenId, uint256 amount, string scout);
-    event BuilderTokenRegistered(uint256 tokenId, string builderId);
+    event TokenRegistered(uint256 tokenId, string builderId);
 
     modifier onlyAdminOrMinter() {
         require(
@@ -101,8 +101,8 @@ contract ScoutGameStarterNFTImplementation is
             builderId
         ] = builderTokenId;
 
-        // Emit BuilderTokenRegistered event
-        emit BuilderTokenRegistered(builderTokenId, builderId);
+        // Emit TokenRegistered event
+        emit TokenRegistered(builderTokenId, builderId);
 
         ImplementationStorage.layout().totalBuilders++;
     }

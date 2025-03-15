@@ -88,8 +88,8 @@ function parseTestReport(input: any[]): ParsedResult[] {
   }
 
   const trackedSuites = [
-    'ScoutProtocolBuilderNFTProxy',
-    'ScoutProtocolBuilderNFTImplementation',
+    'ScoutProtocolNFTProxy',
+    'ScoutProtocolNFTImplementation',
     'ScoutTokenERC20Proxy',
     'ScoutTokenERC20Implementation',
     'ProtocolEASResolver',

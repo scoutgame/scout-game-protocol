@@ -20,7 +20,7 @@ describe('registerBuilderToken()', function () {
   });
 
   describe('events', function () {
-    it('Emits BuilderTokenRegistered event new tokenId and builderId', async function () {
+    it('Emits TokenRegistered event new tokenId and builderId', async function () {
       const {
         builderNft: { builderNftContract, builderNftAdminAccount: account }
       } = await loadContractFixtures();
@@ -34,10 +34,10 @@ describe('registerBuilderToken()', function () {
       const parsedLogs = parseEventLogs({
         abi: builderNftContract.abi,
         logs: receipt.logs,
-        eventName: ['BuilderTokenRegistered']
+        eventName: ['TokenRegistered']
       });
 
-      const decodedEvent = parsedLogs.find((log) => log.eventName === 'BuilderTokenRegistered');
+      const decodedEvent = parsedLogs.find((log) => log.eventName === 'TokenRegistered');
 
       expect(decodedEvent).toBeDefined();
 
