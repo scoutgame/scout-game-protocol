@@ -180,7 +180,7 @@
   - allows the attester wallet to attest
   - prevents other wallets than the attester wallet from attesting
 
-## Contract: ScoutProtocolBuilderNFTImplementation
+## Contract: ScoutProtocolNFTImplementation
 
 ### Write Methods
 
@@ -196,7 +196,7 @@
   - Revert if the builderId is empty
   - Revert if the builderId is an invalid uuid
 - **Events**:
-  - Emits BuilderTokenRegistered event new tokenId and builderId
+  - Emits DevTokenRegistered event new tokenId and builderId
 
 #### rolloverMinterWallet()
 
@@ -373,7 +373,7 @@
   - Returns true for IERC1155 and IERC1155MetadataURI
   - Returns false for ERC20 and ERC721 interfaces
 
-## Contract: ScoutProtocolBuilderNFTProxy
+## Contract: ScoutProtocolNFTProxy
 
 ### Write Methods
 

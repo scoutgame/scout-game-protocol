@@ -307,19 +307,19 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
     log.info('Collected all required addresses and parameters');
 
     // Get contract instances and verify implementations
-    const scoutProtocolBuilderNftProxyContract = await hre.viem.getContractAt(
-      'ScoutProtocolBuilderNFTProxy',
+    const ScoutProtocolNFTProxyContract = await hre.viem.getContractAt(
+      'ScoutProtocolNFTProxy',
       scoutBuilderNFTProxyAddress
     );
     const scoutProtocolBuilderStarterNftProxyContract = await hre.viem.getContractAt(
-      'ScoutGameStarterNFTProxy',
+      'ScoutProtocolStarterNFTProxy',
       scoutBuilderStarterNFTProxyAddress
     );
     const erc20Contract = await hre.viem.getContractAt('ScoutTokenERC20Proxy', scoutTokenERC20ProxyAddress);
     const protocolContract = await hre.viem.getContractAt('ScoutProtocolProxy', scoutProtocolAddress);
 
     // Verify implementations resolves
-    const builderNftImplementation = await scoutProtocolBuilderNftProxyContract.read.implementation().catch(() => {
+    const builderNftImplementation = await ScoutProtocolNFTProxyContract.read.implementation().catch(() => {
       console.error('Error verifying Builder NFT implementation');
       return null;
     });

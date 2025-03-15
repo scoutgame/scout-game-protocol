@@ -41,7 +41,7 @@ task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Nft
 
     // Deploy the implementation contract first
 
-    const implementation = await hre.viem.deployContract('ScoutProtocolBuilderNFTImplementation', [], {
+    const implementation = await hre.viem.deployContract('ScoutProtocolNFTImplementation', [], {
       client: {
         wallet: walletClient
       }
@@ -57,11 +57,11 @@ task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Nft
     }
 
     outputContractAddress({
-      name: 'ScoutProtocolBuilderNFTImplementation',
+      name: 'ScoutProtocolNFTImplementation',
       address: implementationAddress,
       network: getConnectorKey(connector.chain.id),
       contractArtifactSource:
-        'contracts/protocol/contracts/ERC1155/ScoutProtocolBuilderNFTImplementation.sol:ScoutProtocolBuilderNFTImplementation',
+        'contracts/protocol/contracts/ERC1155/ScoutProtocolNFTImplementation.sol:ScoutProtocolNFTImplementation',
       deployArgs: [],
       deploymentName
     });
@@ -188,7 +188,7 @@ task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Nft
         string
       ];
 
-      const newProxyContract = await hre.viem.deployContract('ScoutProtocolBuilderNFTProxy', deployArgs, {
+      const newProxyContract = await hre.viem.deployContract('ScoutProtocolNFTProxy', deployArgs, {
         client: {
           wallet: walletClient
         }
@@ -199,10 +199,9 @@ task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Nft
       console.log('ERC1155 Proxy contract deployed at:', proxyAddress);
 
       outputContractAddress({
-        name: 'ScoutProtocolBuilderNFTProxy',
+        name: 'ScoutProtocolNFTProxy',
         address: proxyAddress,
-        contractArtifactSource:
-          'contracts/protocol/contracts/ERC1155/ScoutProtocolBuilderNFTProxy.sol:ScoutProtocolBuilderNFTProxy',
+        contractArtifactSource: 'contracts/protocol/contracts/ERC1155/ScoutProtocolNFTProxy.sol:ScoutProtocolNFTProxy',
         network: getConnectorKey(connector.chain.id),
         deployArgs: deployArgs.slice(),
         deploymentName

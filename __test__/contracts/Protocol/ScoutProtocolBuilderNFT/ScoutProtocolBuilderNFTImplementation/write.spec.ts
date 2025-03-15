@@ -70,7 +70,7 @@ async function mintNft({
   });
 }
 
-describe('ScoutProtocolBuilderNFTImplementation', function () {
+describe('ScoutProtocolNFTImplementation', function () {
   let token: ScoutTokenERC20TestFixture;
   let scoutProtocolBuilderNFT: ScoutProtocolBuilderNFTFixture;
   let erc1155AdminAccount: GeneratedWallet;
@@ -107,7 +107,7 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
     });
 
     describe('events', function () {
-      it('Emits BuilderTokenRegistered event new tokenId and builderId', async function () {
+      it('Emits DevTokenRegistered event new tokenId and builderId', async function () {
         const builderId = uuid(); // Sample UUID
         const builderAddress = randomEthereumAddress();
         const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken(
@@ -123,10 +123,10 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
         const parsedLogs = parseEventLogs({
           abi: scoutProtocolBuilderNFT.builderNftContract.abi,
           logs: receipt.logs,
-          eventName: ['BuilderTokenRegistered']
+          eventName: ['DevTokenRegistered']
         });
 
-        const decodedEvent = parsedLogs.find((log) => log.eventName === 'BuilderTokenRegistered');
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'DevTokenRegistered');
 
         expect(decodedEvent).toBeDefined();
 

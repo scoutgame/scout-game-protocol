@@ -7,7 +7,7 @@ import { loadScoutProtocolBuilderNFTFixtures } from '../../../../fixtures';
 import type { GeneratedWallet } from '../../../../generateWallets';
 import { generateWallets } from '../../../../generateWallets';
 
-describe('ScoutProtocolBuilderNFTImplementation', function () {
+describe('ScoutProtocolNFTImplementation', function () {
   let scoutProtocolBuilderNFT: ScoutProtocolBuilderNFTFixture;
   let erc20: ScoutTokenERC20TestFixture;
   let builderNftContract: ScoutProtocolBuilderNFTFixture['builderNftContract'];

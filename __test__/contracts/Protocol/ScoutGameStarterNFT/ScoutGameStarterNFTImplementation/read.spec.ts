@@ -8,7 +8,7 @@ import { loadContractWithStarterPackFixtures } from '../../../../fixtures';
 import type { GeneratedWallet } from '../../../../generateWallets';
 import { generateWallets } from '../../../../generateWallets';
 
-describe('ScoutGameStarterNFTImplementation', function () {
+describe('ScoutProtocolStarterNFTImplementation', function () {
   let builderNftContract: BuilderNftStarterPackFixture['builderNftContract'];
   let builderNftAdminAccount: GeneratedWallet;
   let usdc: USDCTestFixture;

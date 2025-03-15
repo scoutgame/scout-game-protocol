@@ -5,7 +5,7 @@ import { randomBigIntFromInterval } from '../../../../../lib/utils';
 import { loadContractWithStarterPackFixtures } from '../../../../fixtures';
 import { generateWallets, walletFromKey } from '../../../../generateWallets';
 
-describe('ScoutGameStarterNFTImplementation', function () {
+describe('ScoutProtocolStarterNFTImplementation', function () {
   describe('registerBuilderToken()', function () {
     describe('effects', function () {
       it('Register a new builder token using a builderId and a specific tokenId', async function () {
@@ -46,7 +46,7 @@ describe('ScoutGameStarterNFTImplementation', function () {
     });
 
     describe('events', function () {
-      it('Emits BuilderTokenRegistered event new tokenId and builderId', async function () {
+      it('Emits DevTokenRegistered event new tokenId and builderId', async function () {
         const {
           builderNftStarterPack: { builderNftContract, builderNftAdminAccount: account }
         } = await loadContractWithStarterPackFixtures();
@@ -61,10 +61,10 @@ describe('ScoutGameStarterNFTImplementation', function () {
         const parsedLogs = parseEventLogs({
           abi: builderNftContract.abi,
           logs: receipt.logs,
-          eventName: ['BuilderTokenRegistered']
+          eventName: ['DevTokenRegistered']
         });
 
-        const decodedEvent = parsedLogs.find((log) => log.eventName === 'BuilderTokenRegistered');
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'DevTokenRegistered');
 
         expect(decodedEvent).toBeDefined();
 

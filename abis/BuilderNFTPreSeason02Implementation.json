@@ -45,7 +45,7 @@
         "type": "string"
       }
     ],
-    "name": "BuilderTokenRegistered",
+    "name": "DevTokenRegistered",
     "type": "event"
   },
   {
