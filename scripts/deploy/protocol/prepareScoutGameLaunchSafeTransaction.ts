@@ -55,7 +55,7 @@ const erc20Abi = [
   }
 ];
 
-const builderNftAbi = [
+const builderRegularNftAbi = [
   {
     inputs: [
       {
@@ -89,7 +89,7 @@ const builderNftAbi = [
   }
 ];
 
-const builderStarterPackNftAbi = [
+const builderStarterNftAbi = [
   {
     inputs: [
       {
@@ -107,22 +107,29 @@ const builderStarterPackNftAbi = [
     inputs: [
       {
         internalType: 'string',
-        name: '_prefix',
-        type: 'string'
-      },
-      {
-        internalType: 'string',
-        name: '_suffix',
+        name: 'newUriPrefix',
         type: 'string'
       }
     ],
-    name: 'setBaseUri',
+    name: 'setUriPrefix',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+  },
+  {
+    inputs: [
+      {
+        internalType: 'string',
+        name: 'newUriSuffix',
+        type: 'string'
+      }
+    ],
+    name: 'setUriSuffix',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function'
   }
 ];
-
 const easResolverAbi = [
   {
     inputs: [
@@ -178,6 +185,9 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
     // ---------------------------------------------------------------------
     // Enter the address of all the contracts here
 
+    // !important: Change this to the season you want to launch
+    const SEASON = '2025-W17';
+
     const {
       easAttesterWalletAddress,
       easResolverAddress,
@@ -185,11 +195,9 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       // https://www.epochconverter.com/ is a great tool for getting a timestamp for a date
       // The timestamp should be lower than or equal to midnight of the start of week 02 of the season
       firstTokenDistributionTimestamp,
-      nftPrefix,
-      nftSuffix,
       sablierLockupTranchedAddress,
-      scoutBuilderNFTProxyAddress,
-      scoutBuilderStarterPackNFTProxyAddress,
+      scoutBuilderRegularNFTProxyAddress,
+      scoutBuilderStarterNFTProxyAddress,
       scoutProtocolAddress,
       scoutProtocolBuilderNftMinterAddress,
       scoutTokenERC20ProxyAddress,
@@ -204,14 +212,14 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       },
       {
         type: 'input',
-        name: 'scoutBuilderNFTProxyAddress',
+        name: 'scoutBuilderRegularNFTProxyAddress',
         message: '[Contract] Enter the Scout Builder NFT ERC1155 Proxy Address:',
         validate: (input) => isAddress(input) || 'Please enter a valid address'
       },
       {
         type: 'input',
-        name: 'scoutBuilderStarterPackNFTProxyAddress',
-        message: '[Contract] Enter the Scout Builder Starter Pack NFT ERC1155 Proxy Address:',
+        name: 'scoutBuilderStarterNFTProxyAddress',
+        message: '[Contract] Enter the Scout Builder Starter NFT ERC1155 Proxy Address:',
         validate: (input) => isAddress(input) || 'Please enter a valid address'
       },
       {
@@ -219,26 +227,6 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
         name: 'scoutProtocolBuilderNftMinterAddress',
         message: '[Wallet]Enter the Scout Protocol Builder NFT Minter Address:',
         validate: (input) => isAddress(input) || 'Please enter a valid address'
-      },
-      {
-        type: 'input',
-        name: 'nftPrefix',
-        message: '[Base URL] Enter the NFT metadata prefix URL:',
-        validate: (input) => {
-          try {
-            // eslint-disable-next-line no-new
-            new URL(input);
-            return !input.includes('awsresourcehere') || 'Please enter the actual AWS URL for storing the NFT images';
-          } catch {
-            return 'Please enter a valid URL';
-          }
-        }
-      },
-      {
-        type: 'input',
-        name: 'nftSuffix',
-        message: '[Filename] Enter the NFT metadata suffix:',
-        default: 'metadata.json'
       },
       {
         type: 'input',
@@ -279,7 +267,7 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       {
         type: 'list',
         name: 'transactionType',
-        message: 'Select the type of transaction to prepare:',
+        message: 'Select the type of transaction to perform:',
         choices: ['Propose', 'Export', 'Both']
       }
     ]);
@@ -289,11 +277,11 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
     // Get contract instances and verify implementations
     const scoutProtocolBuilderNftProxyContract = await hre.viem.getContractAt(
       'ScoutProtocolBuilderNFTProxy',
-      scoutBuilderNFTProxyAddress
+      scoutBuilderRegularNFTProxyAddress
     );
-    const scoutProtocolBuilderStarterPackNftProxyContract = await hre.viem.getContractAt(
+    const scoutProtocolBuilderStarterNftProxyContract = await hre.viem.getContractAt(
       'ScoutGameStarterPackNFTUpgradeable',
-      scoutBuilderStarterPackNFTProxyAddress
+      scoutBuilderStarterNFTProxyAddress
     );
     const erc20Contract = await hre.viem.getContractAt('ScoutTokenERC20Proxy', scoutTokenERC20ProxyAddress);
     const protocolContract = await hre.viem.getContractAt('ScoutProtocolProxy', scoutProtocolAddress);
@@ -309,15 +297,15 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
       );
     }
 
-    const builderStarterPackNftImplementation = await scoutProtocolBuilderStarterPackNftProxyContract.read
+    const builderStarterNftImplementation = await scoutProtocolBuilderStarterNftProxyContract.read
       .implementation()
       .catch(() => {
-        console.error('Error verifying Builder Starter Pack NFT implementation');
+        console.error('Error verifying Builder Starter NFT implementation');
         return null;
       });
-    if (!builderStarterPackNftImplementation || !isAddress(builderStarterPackNftImplementation)) {
+    if (!builderStarterNftImplementation || !isAddress(builderStarterNftImplementation)) {
       throw new Error(
-        'Invalid Builder Starter Pack NFT proxy address. Make sure you passed the proxy, not the implementation address.'
+        'Invalid Builder Starter NFT proxy address. Make sure you passed the proxy, not the implementation address.'
       );
     }
 
@@ -396,13 +384,13 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
     // Phase 2 - Prepare the Builder NFT contract
 
     const encodedBuilderNftSetMinterData = encodeFunctionData({
-      abi: builderNftAbi,
+      abi: builderRegularNftAbi,
       functionName: 'setMinter',
       args: [scoutProtocolBuilderNftMinterAddress]
     });
 
     const builderNftSetMinterTxData = {
-      to: getAddress(scoutBuilderNFTProxyAddress),
+      to: getAddress(scoutBuilderRegularNFTProxyAddress),
       data: encodedBuilderNftSetMinterData,
       operation: OperationType.Call,
       value: '0'
@@ -412,14 +400,16 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
 
     safeTransactionData.push(builderNftSetMinterTxData);
 
+    const baseUri = `https://nft.scoutgame.xyz/seasons/${SEASON}`;
+
     const encodedBuilderNftSetBaseUriData = encodeFunctionData({
-      abi: builderNftAbi,
+      abi: builderRegularNftAbi,
       functionName: 'setBaseUri',
-      args: [nftPrefix, nftSuffix]
+      args: [`${baseUri}/${scoutBuilderRegularNFTProxyAddress}`, 'metadata.json']
     });
 
     const builderNftSetBaseUriTxData = {
-      to: getAddress(scoutBuilderNFTProxyAddress),
+      to: getAddress(scoutBuilderRegularNFTProxyAddress),
       data: encodedBuilderNftSetBaseUriData,
       operation: OperationType.Call,
       value: '0'
@@ -429,41 +419,58 @@ task('prepareScoutGameLaunchSafeTransaction', 'Prepares a Safe transaction to la
 
     safeTransactionData.push(builderNftSetBaseUriTxData);
 
-    // Phase 4 - Prepare the Builder Starter Pack NFT contract
+    // Phase 4 - Prepare the Builder Starter NFT contract
 
-    const encodedBuilderStarterPackNftSetMinterData = encodeFunctionData({
-      abi: builderStarterPackNftAbi,
+    const encodedBuilderStarterNftSetMinterData = encodeFunctionData({
+      abi: builderStarterNftAbi,
       functionName: 'setMinter',
       args: [scoutProtocolBuilderNftMinterAddress]
     });
 
-    const builderStarterPackNftSetMinterTxData = {
-      to: getAddress(scoutBuilderStarterPackNFTProxyAddress),
-      data: encodedBuilderStarterPackNftSetMinterData,
+    const builderStarterNftSetMinterTxData = {
+      to: getAddress(scoutBuilderStarterNFTProxyAddress),
+      data: encodedBuilderStarterNftSetMinterData,
       operation: OperationType.Call,
       value: '0'
     };
 
-    await apiKit.estimateSafeTransaction(safeAddress, builderNftSetMinterTxData);
+    await apiKit.estimateSafeTransaction(safeAddress, builderStarterNftSetMinterTxData);
 
-    safeTransactionData.push(builderStarterPackNftSetMinterTxData);
+    safeTransactionData.push(builderStarterNftSetMinterTxData);
 
-    const encodedBuilderStarterPackNftSetBaseUriData = encodeFunctionData({
-      abi: builderStarterPackNftAbi,
-      functionName: 'setBaseUri',
-      args: [nftPrefix, nftSuffix]
+    const encodedBuilderStarterNftSetUriPrefixData = encodeFunctionData({
+      abi: builderStarterNftAbi,
+      functionName: 'setUriPrefix',
+      args: [`${baseUri}/${scoutBuilderStarterNFTProxyAddress}`]
     });
 
-    const builderStarterPackNftSetBaseUriTxData = {
-      to: getAddress(scoutBuilderStarterPackNFTProxyAddress),
-      data: encodedBuilderStarterPackNftSetBaseUriData,
+    const builderStarterNftSetUriPrefixTxData = {
+      to: getAddress(scoutBuilderStarterNFTProxyAddress),
+      data: encodedBuilderStarterNftSetUriPrefixData,
       operation: OperationType.Call,
       value: '0'
     };
 
-    await apiKit.estimateSafeTransaction(safeAddress, builderNftSetBaseUriTxData);
+    await apiKit.estimateSafeTransaction(safeAddress, builderStarterNftSetUriPrefixTxData);
 
-    safeTransactionData.push(builderStarterPackNftSetBaseUriTxData);
+    safeTransactionData.push(builderStarterNftSetUriPrefixTxData);
+
+    const encodedBuilderStarterNftSetUriSuffixData = encodeFunctionData({
+      abi: builderStarterNftAbi,
+      functionName: 'setUriSuffix',
+      args: ['starter-metadata.json']
+    });
+
+    const builderStarterNftSetUriSuffixTxData = {
+      to: getAddress(scoutBuilderStarterNFTProxyAddress),
+      data: encodedBuilderStarterNftSetUriSuffixData,
+      operation: OperationType.Call,
+      value: '0'
+    };
+
+    await apiKit.estimateSafeTransaction(safeAddress, builderStarterNftSetUriSuffixTxData);
+
+    safeTransactionData.push(builderStarterNftSetUriSuffixTxData);
 
     // Phase 3 - Configure the EAS Attester Wallet
 
