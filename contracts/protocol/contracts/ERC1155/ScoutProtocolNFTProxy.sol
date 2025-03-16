@@ -48,7 +48,7 @@ contract ScoutProtocolNFTProxy is Context, ScoutProtocolAccessControl {
                 _paymentTokenAddress
             );
 
-        uint256 _priceIncrement = 20 * (10 ** _paymentToken.decimals());
+        uint256 _priceIncrement = 100 * (10 ** _paymentToken.decimals());
 
         MemoryUtils._setUint256(
             MemoryUtils.PRICE_INCREMENT_SLOT,
