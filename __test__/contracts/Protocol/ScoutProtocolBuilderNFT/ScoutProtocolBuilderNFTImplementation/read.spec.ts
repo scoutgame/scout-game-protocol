@@ -162,15 +162,15 @@ describe('ScoutProtocolNFTImplementation', function () {
 
         const priceForOneToken = await builderNftContract.read.getTokenPurchasePrice([tokenId, BigInt(1)]);
 
-        expect(priceForOneToken).toBe(BigInt(20) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
+        expect(priceForOneToken).toBe(BigInt(100) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
 
         const priceForTwoTokens = await builderNftContract.read.getTokenPurchasePrice([tokenId, BigInt(2)]);
 
-        expect(priceForTwoTokens).toBe(BigInt(60) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
+        expect(priceForTwoTokens).toBe(BigInt(300) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
 
         const priceForThreeTokens = await builderNftContract.read.getTokenPurchasePrice([tokenId, BigInt(3)]);
 
-        expect(priceForThreeTokens).toBe(BigInt(120) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
+        expect(priceForThreeTokens).toBe(BigInt(600) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
 
         const minted = BigInt(3);
 
@@ -190,7 +190,7 @@ describe('ScoutProtocolNFTImplementation', function () {
 
         const price = await builderNftContract.read.getTokenPurchasePrice([tokenId, BigInt(1)]);
 
-        expect(price).toBe(BigInt(80) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
+        expect(price).toBe(BigInt(400) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
 
         await builderNftContract.write.burn([userAccount.account.address, tokenId, BigInt(2)], {
           account: userAccount.account
@@ -199,7 +199,7 @@ describe('ScoutProtocolNFTImplementation', function () {
         const priceAfterBurn = await builderNftContract.read.getTokenPurchasePrice([tokenId, BigInt(1)]);
 
         // Burned 2 tokens, 1 token remains in supply (S) so the price should be 40e18, which is 2S + 2
-        expect(priceAfterBurn).toBe(BigInt(40) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
+        expect(priceAfterBurn).toBe(BigInt(200) * erc20.ScoutTokenERC20_DECIMAL_MULTIPLIER);
       });
     });
   });
