@@ -1,4 +1,7 @@
+import { randomBytes } from 'crypto';
+
 import { v4 as uuid } from 'uuid';
+import type { Address } from 'viem';
 import { getAddress } from 'viem';
 
 import { randomBigIntFromInterval } from '../../../../../lib/utils';
@@ -7,6 +10,11 @@ import type { USDCTestFixture } from '../../../../deployTestUSDC';
 import { loadContractWithStarterPackFixtures } from '../../../../fixtures';
 import type { GeneratedWallet } from '../../../../generateWallets';
 import { generateWallets } from '../../../../generateWallets';
+
+function randomEthereumAddress() {
+  const randomAddress = `0x${randomBytes(20).toString('hex')}`;
+  return randomAddress as Address;
+}
 
 describe('ScoutProtocolStarterNFTImplementation', function () {
   let builderNftContract: BuilderNftStarterPackFixture['builderNftContract'];
@@ -35,7 +43,8 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
 
       const builderId = uuid();
       const tokenId = randomBigIntFromInterval();
-      await builderNftContract.write.registerBuilderToken([builderId, tokenId]);
+      const builderAddress = randomEthereumAddress();
+      await builderNftContract.write.registerBuilderToken([builderId, tokenId, builderAddress]);
 
       const scoutId = uuid();
       const amount = BigInt(1);
@@ -83,8 +92,8 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
       const tokenId1 = randomBigIntFromInterval();
       const tokenId2 = randomBigIntFromInterval();
 
-      await builderNftContract.write.registerBuilderToken([builderId1, tokenId1]);
-      await builderNftContract.write.registerBuilderToken([builderId2, tokenId2]);
+      await builderNftContract.write.registerBuilderToken([builderId1, tokenId1, randomEthereumAddress()]);
+      await builderNftContract.write.registerBuilderToken([builderId2, tokenId2, randomEthereumAddress()]);
 
       const amount1 = BigInt(1);
       const amount2 = BigInt(1);
@@ -158,7 +167,7 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
 
       const builderId = uuid();
       const tokenId = randomBigIntFromInterval();
-      await builderNftContract.write.registerBuilderToken([builderId, tokenId]);
+      await builderNftContract.write.registerBuilderToken([builderId, tokenId, randomEthereumAddress()]);
 
       const priceForOneToken = await builderNftContract.read.getTokenPurchasePrice([BigInt(1)]);
 
@@ -204,7 +213,7 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
 
       const builderId = uuid();
       const tokenId = randomBigIntFromInterval();
-      await builderNftContract.write.registerBuilderToken([builderId, tokenId]);
+      await builderNftContract.write.registerBuilderToken([builderId, tokenId, randomEthereumAddress()]);
 
       const scoutId = uuid();
       const amount = BigInt(1);
@@ -238,7 +247,7 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
     it('Returns the correct builderId for a given tokenId', async function () {
       const builderId = uuid();
       const tokenId = randomBigIntFromInterval();
-      await builderNftContract.write.registerBuilderToken([builderId, tokenId]);
+      await builderNftContract.write.registerBuilderToken([builderId, tokenId, randomEthereumAddress()]);
 
       const returnedBuilderId = await builderNftContract.read.getBuilderIdForToken([tokenId]);
       expect(returnedBuilderId).toBe(builderId);
@@ -256,7 +265,7 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
     it('Returns the correct tokenId for a given builderId', async function () {
       const builderId = uuid();
       const tokenId = randomBigIntFromInterval();
-      await builderNftContract.write.registerBuilderToken([builderId, tokenId]);
+      await builderNftContract.write.registerBuilderToken([builderId, tokenId, randomEthereumAddress()]);
 
       const tokenIdFromStorage = await builderNftContract.read.getTokenIdForBuilder([builderId]);
       expect(tokenIdFromStorage).toBe(tokenId);
@@ -279,8 +288,8 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
       const builderId2 = uuid();
       const tokenId1 = randomBigIntFromInterval();
       const tokenId2 = randomBigIntFromInterval();
-      await builderNftContract.write.registerBuilderToken([builderId1, tokenId1]);
-      await builderNftContract.write.registerBuilderToken([builderId2, tokenId2]);
+      await builderNftContract.write.registerBuilderToken([builderId1, tokenId1, randomEthereumAddress()]);
+      await builderNftContract.write.registerBuilderToken([builderId2, tokenId2, randomEthereumAddress()]);
 
       totalBuilderTokens = await builderNftContract.read.totalBuilderTokens();
       expect(totalBuilderTokens).toBe(BigInt(2));
