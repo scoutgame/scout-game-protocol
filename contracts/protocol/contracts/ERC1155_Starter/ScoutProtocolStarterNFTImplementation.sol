@@ -50,6 +50,24 @@ contract ScoutProtocolStarterNFTImplementation is
     // Events
     event BuilderScouted(uint256 tokenId, uint256 amount, string scout);
     event TokenRegistered(uint256 tokenId, string builderId);
+    event ERC20ContractUpdated(
+        address indexed previousContract,
+        address indexed newContract
+    );
+    event MinterSet(address indexed previousMinter, address indexed newMinter);
+    event BuilderAddressUpdated(
+        uint256 indexed tokenId,
+        address indexed previousAddress,
+        address indexed newAddress
+    );
+    event ProceedsReceiverSet(
+        address indexed previousReceiver,
+        address indexed newReceiver
+    );
+    event PriceIncrementUpdated(
+        uint256 previousIncrement,
+        uint256 newIncrement
+    );
 
     modifier onlyAdminOrMinter() {
         require(
@@ -349,7 +367,11 @@ contract ScoutProtocolStarterNFTImplementation is
 
     function setMinter(address minter) external onlyAdmin {
         require(minter != address(0), "Invalid address");
+        address previousMinter = MemoryUtils._getAddress(
+            MemoryUtils.MINTER_SLOT
+        );
         MemoryUtils._setAddress(MemoryUtils.MINTER_SLOT, minter);
+        emit MinterSet(previousMinter, minter);
     }
 
     function getMinter() external view returns (address) {
@@ -408,7 +430,11 @@ contract ScoutProtocolStarterNFTImplementation is
 
     function updateERC20Contract(address newContract) external onlyAdmin {
         require(newContract != address(0), "Invalid address");
+        address previousContract = MemoryUtils._getAddress(
+            MemoryUtils.CLAIMS_TOKEN_SLOT
+        );
         MemoryUtils._setAddress(MemoryUtils.CLAIMS_TOKEN_SLOT, newContract);
+        emit ERC20ContractUpdated(previousContract, newContract);
     }
 
     function getERC20Contract() external view returns (address) {
@@ -563,7 +589,9 @@ contract ScoutProtocolStarterNFTImplementation is
 
     function setProceedsReceiver(address receiver) external onlyAdmin {
         require(receiver != address(0), "Invalid address");
+        address previousReceiver = _getProceedsReceiver();
         MemoryUtils._setAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT, receiver);
+        emit ProceedsReceiverSet(previousReceiver, receiver);
     }
 
     function getProceedsReceiver() external view returns (address) {
@@ -575,7 +603,11 @@ contract ScoutProtocolStarterNFTImplementation is
     }
 
     function updatePriceIncrement(uint256 newIncrement) external onlyAdmin {
+        uint256 previousIncrement = MemoryUtils._getUint256(
+            MemoryUtils.PRICE_INCREMENT_SLOT
+        );
         MemoryUtils._setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, newIncrement);
+        emit PriceIncrementUpdated(previousIncrement, newIncrement);
     }
 
     function getPriceIncrement() public view returns (uint256) {
@@ -612,5 +644,7 @@ contract ScoutProtocolStarterNFTImplementation is
         ImplementationStorage.layout().tokenToAddressRegistry[
             tokenId
         ] = newAddress;
+
+        emit BuilderAddressUpdated(tokenId, currentBuilderAddress, newAddress);
     }
 }
