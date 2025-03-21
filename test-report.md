@@ -113,7 +113,7 @@
 - **Effects**:
   - marks the contract as paused
 - **Permissions**:
-  - can be paused by the pauser role 
+  - can be paused by the pauser role
   - reverts when called by non-pauser and non-admin
 - **Events**:
   - emits Paused event when paused
@@ -128,7 +128,6 @@
   - emits Unpaused event when unpaused
 
 #### testPaused
-
 
 #### setPauser
 
@@ -181,7 +180,7 @@
   - allows the attester wallet to attest
   - prevents other wallets than the attester wallet from attesting
 
-## Contract: ScoutProtocolBuilderNFTImplementation
+## Contract: ScoutProtocolNFTImplementation
 
 ### Write Methods
 
@@ -197,7 +196,7 @@
   - Revert if the builderId is empty
   - Revert if the builderId is an invalid uuid
 - **Events**:
-  - Emits BuilderTokenRegistered event new tokenId and builderId
+  - Emits TokenRegistered event new tokenId and builderId
 
 #### rolloverMinterWallet()
 
@@ -216,7 +215,7 @@
   - Mints tokens to a user account
   - Mints tokens to a different address than the one paying for the transfer
   - Increments total supply of the token
-  - Forwards 20% of the $SCOUT to the builder, and the remaining 80% to the proceeds receiver
+  - Forwards 20% of the $DEV to the builder, and the remaining 80% to the proceeds receiver
 - **Permissions**:
   - Allows any user to mint tokens if they pay the price
   - Cannot mint when contract is paused
@@ -374,7 +373,7 @@
   - Returns true for IERC1155 and IERC1155MetadataURI
   - Returns false for ERC20 and ERC721 interfaces
 
-## Contract: ScoutProtocolBuilderNFTProxy
+## Contract: ScoutProtocolNFTProxy
 
 ### Write Methods
 
@@ -520,4 +519,3 @@
   - updates the implementation address correctly, preserving balances and initialized state
 - **Permissions**:
   - prevents non-admin from setting the implementation
-

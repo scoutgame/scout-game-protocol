@@ -160,8 +160,11 @@ const config: Omit<HardhatUserConfig, 'networks'> & { networks: Record<Supported
           network: 'base',
           chainId: 8453,
           urls: {
-            apiURL: 'https://base.blockscout.com/api',
-            browserURL: 'https://base.blockscout.com'
+            // apiURL: 'https://base.blockscout.com/api',
+            // browserURL: 'https://base.blockscout.com'
+
+            apiURL: 'https://api.basescan.org/api',
+            browserURL: 'https://basescan.org'
           }
         },
         {
