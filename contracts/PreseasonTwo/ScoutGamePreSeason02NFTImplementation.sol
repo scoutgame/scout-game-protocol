@@ -26,7 +26,7 @@ contract ScoutGamePreSeason02NFTImplementation is
     using Address for address;
 
     // Events
-    event BuilderTokenRegistered(uint256 tokenId, string builderId);
+    event TokenRegistered(uint256 tokenId, string builderId);
 
     modifier onlyAdminOrMinter() {
         require(
@@ -291,8 +291,8 @@ contract ScoutGamePreSeason02NFTImplementation is
             builderId
         );
 
-        // Emit BuilderTokenRegistered event
-        emit BuilderTokenRegistered(_nextTokenId, builderId);
+        // Emit TokenRegistered event
+        emit TokenRegistered(_nextTokenId, builderId);
 
         // Increment the next token ID
         BuilderNFTPreSeasonStorage.incrementNextTokenId();

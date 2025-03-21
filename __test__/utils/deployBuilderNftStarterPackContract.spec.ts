@@ -1,7 +1,7 @@
 import { getAddress } from 'viem';
 
 import { NULL_EVM_ADDRESS } from '../../lib/constants';
-import { deployBuilderNftStarterPackContract } from '../deployBuilderNftStarterPack';
+import { deployBuilderNftStarterPackContract } from '../deployBuilderStarterNft';
 import { deployTestUSDC } from '../deployTestUSDC';
 
 describe('Proxy and Initialization', function () {

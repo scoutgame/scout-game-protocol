@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { v4 as uuid } from 'uuid';
 import type { Address } from 'viem';
-import { parseEventLogs } from 'viem';
+import { getAddress, parseEventLogs } from 'viem';
 
 import type { ScoutProtocolBuilderNFTFixture } from '../../../../deployScoutProtocolBuilderNft';
 import type { ScoutTokenERC20TestFixture } from '../../../../deployScoutTokenERC20';
@@ -70,7 +70,7 @@ async function mintNft({
   });
 }
 
-describe('ScoutProtocolBuilderNFTImplementation', function () {
+describe('ScoutProtocolNFTImplementation', function () {
   let token: ScoutTokenERC20TestFixture;
   let scoutProtocolBuilderNFT: ScoutProtocolBuilderNFTFixture;
   let erc1155AdminAccount: GeneratedWallet;
@@ -107,7 +107,7 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
     });
 
     describe('events', function () {
-      it('Emits BuilderTokenRegistered event new tokenId and builderId', async function () {
+      it('Emits TokenRegistered event new tokenId and builderId', async function () {
         const builderId = uuid(); // Sample UUID
         const builderAddress = randomEthereumAddress();
         const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken(
@@ -123,10 +123,10 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
         const parsedLogs = parseEventLogs({
           abi: scoutProtocolBuilderNFT.builderNftContract.abi,
           logs: receipt.logs,
-          eventName: ['BuilderTokenRegistered']
+          eventName: ['TokenRegistered']
         });
 
-        const decodedEvent = parsedLogs.find((log) => log.eventName === 'BuilderTokenRegistered');
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'TokenRegistered');
 
         expect(decodedEvent).toBeDefined();
 
@@ -317,7 +317,7 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
         expect(finalTotalSupply).toEqual(BigInt(4));
       });
 
-      it('Forwards 20% of the $SCOUT to the builder, and the remaining 80% to the proceeds receiver', async function () {
+      it('Forwards 20% of the $DEV to the builder, and the remaining 80% to the proceeds receiver', async function () {
         const { tokenId, builderAddress } = await registerBuilderToken({
           wallet: erc1155AdminAccount,
           nft: scoutProtocolBuilderNFT
@@ -483,6 +483,31 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
     });
 
     describe('validations', function () {
+      it('Reverts if token supply limit is reached', async function () {
+        await scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([BigInt(78)], {
+          account: erc1155AdminAccount.account
+        });
+
+        const { tokenId } = await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT
+        });
+
+        await mintNft({
+          wallet: userAccount,
+          erc20: token,
+          nft: scoutProtocolBuilderNFT,
+          amount: 78,
+          tokenId
+        });
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mint([userAccount.account.address, tokenId, BigInt(1)], {
+            account: userAccount.account
+          })
+        ).rejects.toThrow('Token supply limit reached');
+      });
+
       it('Reverts if tokenId is not registered', async function () {
         const unregisteredTokenId = BigInt(999);
         const mintPrice = await scoutProtocolBuilderNFT.builderNftContract.read.getTokenPurchasePrice([
@@ -503,7 +528,7 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
             [userAccount.account.address, unregisteredTokenId, BigInt(1)],
             { account: userAccount.account }
           )
-        ).rejects.toThrow('Token ID not registered');
+        ).rejects.toThrow('Token not yet allocated');
       });
     });
   });
@@ -1312,6 +1337,43 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
       });
     });
 
+    describe('events', function () {
+      it('emits BuilderAddressUpdated event', async function () {
+        const builderAddress = randomEthereumAddress();
+
+        const { tokenId } = await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT,
+          builderAddress
+        });
+
+        const newBuilderAddress = randomEthereumAddress();
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.updateBuilderTokenAddress(
+          [tokenId, newBuilderAddress],
+          {
+            account: erc1155AdminAccount.account
+          }
+        );
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['BuilderAddressUpdated']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'BuilderAddressUpdated');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.tokenId).toEqual(tokenId);
+        expect(decodedEvent!.args.previousAddress.toLowerCase()).toEqual(builderAddress.toLowerCase());
+        expect(decodedEvent!.args.newAddress.toLowerCase()).toEqual(newBuilderAddress.toLowerCase());
+      });
+    });
+
     describe('permissions', function () {
       it('Allows current builder to update their address', async function () {
         const builderAccount = await walletFromKey();
@@ -1404,6 +1466,381 @@ describe('ScoutProtocolBuilderNFTImplementation', function () {
             }
           )
         ).rejects.toThrow('Token not yet allocated');
+      });
+    });
+  });
+
+  describe('setMaxSupplyPerToken()', function () {
+    describe('effects', function () {
+      it('Updates the max supply per token', async function () {
+        const newMaxSupply = BigInt(127);
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([newMaxSupply], {
+            account: erc1155AdminAccount.account
+          })
+        ).resolves.toBeDefined();
+
+        const maxSupply = await scoutProtocolBuilderNFT.builderNftContract.read.maxSupplyPerToken();
+        expect(maxSupply).toEqual(newMaxSupply);
+      });
+    });
+
+    describe('events', function () {
+      it('emits MaxSupplyPerTokenSet event', async function () {
+        const previousMaxSupply = await scoutProtocolBuilderNFT.builderNftContract.read.maxSupplyPerToken();
+        const newMaxSupply = BigInt(200);
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([newMaxSupply], {
+          account: erc1155AdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['MaxSupplyPerTokenSet']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'MaxSupplyPerTokenSet');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousMaxSupply).toEqual(previousMaxSupply);
+        expect(decodedEvent!.args.newMaxSupply).toEqual(newMaxSupply);
+      });
+    });
+
+    describe('permissions', function () {
+      it('Only admin can set the max supply per token', async function () {
+        const newMaxSupply = BigInt(128);
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([newMaxSupply], {
+            account: userAccount.account
+          })
+        ).rejects.toThrow('Caller is not the admin');
+      });
+    });
+
+    describe('validations', function () {
+      it('Reverts if new max supply is zero', async function () {
+        const newMaxSupply = BigInt(0);
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([newMaxSupply], {
+            account: erc1155AdminAccount.account
+          })
+        ).rejects.toThrow('Max supply must be greater than 0');
+      });
+    });
+  });
+
+  describe('mintTo()', function () {
+    describe('effects', function () {
+      it('Mints tokens to the specified account', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        const builderId = uuid();
+        const builderAddress = randomEthereumAddress();
+        await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken([builderId, builderAddress]);
+
+        // Admin mints tokens to the user
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(10)])
+        ).resolves.toBeDefined();
+
+        const balance = await scoutProtocolBuilderNFT.builderNftContract.read.balanceOf([testUserAddress, BigInt(1)]);
+        expect(balance).toBe(BigInt(10));
+      });
+    });
+
+    describe('events', function () {
+      it('Emits TransferSingle event with correct parameters', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        const builderId = uuid();
+        const builderAddress = randomEthereumAddress();
+        await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken([builderId, builderAddress]);
+
+        const tokenId = BigInt(1);
+        const amount = BigInt(10);
+
+        // Admin mints tokens to the user
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.mintTo([
+          testUserAddress,
+          tokenId,
+          amount
+        ]);
+
+        // Extract logs and parse events
+        const receipt = await erc1155AdminAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['TransferSingle']
+        });
+
+        // Check for TransferSingle event
+        const transferEvent = parsedLogs.find((log) => log.eventName === 'TransferSingle');
+        expect(transferEvent).toBeDefined();
+
+        expect(transferEvent!.args.operator).toEqual(getAddress(erc1155AdminAccount.account.address));
+        expect(transferEvent!.args.from).toEqual('0x0000000000000000000000000000000000000000');
+        expect(transferEvent!.args.to).toEqual(getAddress(testUserAddress));
+        expect(transferEvent!.args.id).toEqual(tokenId);
+        expect(transferEvent!.args.value).toEqual(amount);
+      });
+
+      it('Emits TransferSingle event with correct parameters', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT
+        });
+
+        const tokenId = BigInt(1);
+        const amount = BigInt(10);
+
+        // Admin mints tokens to the user
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.mintTo([
+          testUserAddress,
+          tokenId,
+          amount
+        ]);
+
+        // Extract logs and parse events
+        const receipt = await erc1155AdminAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['TransferSingle']
+        });
+
+        // Check for TransferSingle event
+        const transferEvent = parsedLogs.find((log) => log.eventName === 'TransferSingle');
+        expect(transferEvent).toBeDefined();
+
+        expect(transferEvent!.args.operator).toEqual(getAddress(erc1155AdminAccount.account.address));
+        expect(transferEvent!.args.from).toEqual('0x0000000000000000000000000000000000000000');
+        expect(transferEvent!.args.to).toEqual(getAddress(testUserAddress));
+        expect(transferEvent!.args.id).toEqual(tokenId);
+        expect(transferEvent!.args.value).toEqual(amount);
+      });
+    });
+
+    describe('permissions', function () {
+      it('prevents non-admins from minting tokens to an account', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT
+        });
+
+        // Non-admin tries to mint tokens
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(10)], {
+            account: secondUserAccount.account
+          })
+        ).rejects.toThrow('Caller is not the admin or minter');
+      });
+
+      it('Minter can mint tokens to an account', async function () {
+        const { secondUserAccount, thirdUserAccount: minterAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        const builderId = uuid();
+        const builderAddress = randomEthereumAddress();
+        await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken([builderId, builderAddress]);
+
+        await scoutProtocolBuilderNFT.builderNftContract.write.setMinter([minterAccount.account.address]);
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(5)], {
+            account: erc1155AdminAccount.account
+          })
+        ).resolves.toBeDefined();
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(10)], {
+            account: minterAccount.account
+          })
+        ).resolves.toBeDefined();
+
+        const balance = await scoutProtocolBuilderNFT.builderNftContract.read.balanceOf([testUserAddress, BigInt(1)]);
+
+        expect(balance).toBe(BigInt(15));
+      });
+    });
+
+    describe('validations', function () {
+      it('Reverts if token supply limit is reached', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        const builderId = uuid();
+        const builderAddress = randomEthereumAddress();
+        await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken([builderId, builderAddress]);
+
+        // Admin mints tokens to the user
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(10)])
+        ).resolves.toBeDefined();
+
+        await scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([BigInt(78)], {
+          account: erc1155AdminAccount.account
+        });
+
+        const { tokenId } = await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT
+        });
+
+        await mintNft({
+          wallet: userAccount,
+          erc20: token,
+          nft: scoutProtocolBuilderNFT,
+          amount: 78,
+          tokenId
+        });
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([userAccount.account.address, tokenId, BigInt(1)], {
+            account: erc1155AdminAccount.account
+          })
+        ).rejects.toThrow('Token supply limit reached');
+      });
+    });
+  });
+
+  describe('setMinter()', function () {
+    describe('effects', function () {
+      it('sets the minter', async function () {
+        await scoutProtocolBuilderNFT.builderNftContract.write.setMinter([userAccount.account.address], {
+          account: erc1155AdminAccount.account
+        });
+
+        const minter = await scoutProtocolBuilderNFT.builderNftContract.read.minter();
+        expect(getAddress(minter)).toEqual(getAddress(userAccount.account.address));
+      });
+    });
+
+    describe('events', function () {
+      it('emits MinterSet event', async function () {
+        const previousMinter = await scoutProtocolBuilderNFT.builderNftContract.read.minter();
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.setMinter(
+          [userAccount.account.address],
+          {
+            account: erc1155AdminAccount.account
+          }
+        );
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['MinterSet']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'MinterSet');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousMinter.toLowerCase()).toEqual(previousMinter.toLowerCase());
+        expect(decodedEvent!.args.newMinter.toLowerCase()).toEqual(userAccount.account.address.toLowerCase());
+      });
+    });
+  });
+
+  describe('setProceedsReceiver()', function () {
+    describe('effects', function () {
+      it('sets the proceeds receiver', async function () {
+        const newReceiver = randomEthereumAddress();
+
+        await scoutProtocolBuilderNFT.builderNftContract.write.setProceedsReceiver([newReceiver], {
+          account: erc1155AdminAccount.account
+        });
+
+        const receiver = await scoutProtocolBuilderNFT.builderNftContract.read.proceedsReceiver();
+        expect(receiver.toLowerCase()).toEqual(newReceiver.toLowerCase());
+      });
+    });
+
+    describe('events', function () {
+      it('emits ProceedsReceiverSet event', async function () {
+        const previousReceiver = await scoutProtocolBuilderNFT.builderNftContract.read.proceedsReceiver();
+        const newReceiver = randomEthereumAddress();
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.setProceedsReceiver([newReceiver], {
+          account: erc1155AdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['ProceedsReceiverSet']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'ProceedsReceiverSet');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousReceiver.toLowerCase()).toEqual(previousReceiver.toLowerCase());
+        expect(decodedEvent!.args.newReceiver.toLowerCase()).toEqual(newReceiver.toLowerCase());
+      });
+    });
+  });
+
+  describe('updatePriceIncrement()', function () {
+    describe('effects', function () {
+      it('updates the price increment', async function () {
+        const newIncrement = BigInt(1000000);
+
+        await scoutProtocolBuilderNFT.builderNftContract.write.updatePriceIncrement([newIncrement], {
+          account: erc1155AdminAccount.account
+        });
+
+        const increment = await scoutProtocolBuilderNFT.builderNftContract.read.getPriceIncrement();
+        expect(increment).toEqual(newIncrement);
+      });
+    });
+
+    describe('events', function () {
+      it('emits PriceIncrementUpdated event', async function () {
+        const previousIncrement = await scoutProtocolBuilderNFT.builderNftContract.read.getPriceIncrement();
+        const newIncrement = BigInt(2000000);
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.updatePriceIncrement([newIncrement], {
+          account: erc1155AdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['PriceIncrementUpdated']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'PriceIncrementUpdated');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousIncrement).toEqual(previousIncrement);
+        expect(decodedEvent!.args.newIncrement).toEqual(newIncrement);
       });
     });
   });

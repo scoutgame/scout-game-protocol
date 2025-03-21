@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "../../libs/MemoryUtils.sol";
 import "../../libs/ScoutProtocolAccessControl.sol";
-import "./libs/ScoutProtocolBuilderNFTStorage.sol";
+import "./libs/ScoutProtocolNFTStorage.sol";
 import "../../libs/StringUtils.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract ScoutProtocolBuilderNFTImplementation is
+contract ScoutProtocolNFTImplementation is
     Context,
     ERC165,
     ScoutProtocolAccessControl,
@@ -21,12 +21,27 @@ contract ScoutProtocolBuilderNFTImplementation is
     IERC1155MetadataURI
 {
     using MemoryUtils for bytes32;
-    using ScoutProtocolBuilderNFTStorage for bytes32;
+    using ScoutProtocolNFTStorage for bytes32;
     using StringUtils for string;
     using Address for address;
 
     // Events
-    event BuilderTokenRegistered(uint256 tokenId, string builderId);
+    event TokenRegistered(uint256 tokenId, string builderId);
+    event MinterSet(address indexed previousMinter, address indexed newMinter);
+    event BuilderAddressUpdated(
+        uint256 indexed tokenId,
+        address indexed previousAddress,
+        address indexed newAddress
+    );
+    event ProceedsReceiverSet(
+        address indexed previousReceiver,
+        address indexed newReceiver
+    );
+    event PriceIncrementUpdated(
+        uint256 previousIncrement,
+        uint256 newIncrement
+    );
+    event MaxSupplyPerTokenSet(uint256 previousMaxSupply, uint256 newMaxSupply);
 
     modifier onlyAdminOrMinter() {
         require(
@@ -47,7 +62,7 @@ contract ScoutProtocolBuilderNFTImplementation is
             account != address(0),
             "ERC1155: balance query for the zero address"
         );
-        return ScoutProtocolBuilderNFTStorage.getBalance(account, tokenId);
+        return ScoutProtocolNFTStorage.getBalance(account, tokenId);
     }
 
     function balanceOfBatch(
@@ -76,7 +91,7 @@ contract ScoutProtocolBuilderNFTImplementation is
             "ERC1155: setting approval status for self"
         );
 
-        ScoutProtocolBuilderNFTStorage.setApprovalForAll(
+        ScoutProtocolNFTStorage.setApprovalForAll(
             _msgSender(),
             operator,
             approved
@@ -89,8 +104,7 @@ contract ScoutProtocolBuilderNFTImplementation is
         address account,
         address operator
     ) public view override returns (bool) {
-        return
-            ScoutProtocolBuilderNFTStorage.isApprovedForAll(account, operator);
+        return ScoutProtocolNFTStorage.isApprovedForAll(account, operator);
     }
 
     function safeTransferFrom(
@@ -106,17 +120,14 @@ contract ScoutProtocolBuilderNFTImplementation is
         );
         require(to != address(0), "ERC1155: transfer to the zero address");
 
-        uint256 fromBalance = ScoutProtocolBuilderNFTStorage.getBalance(
-            from,
-            tokenId
-        );
+        uint256 fromBalance = ScoutProtocolNFTStorage.getBalance(from, tokenId);
         require(
             fromBalance >= amount,
             "ERC1155: insufficient balance for transfer"
         );
 
-        ScoutProtocolBuilderNFTStorage.decreaseBalance(from, tokenId, amount);
-        ScoutProtocolBuilderNFTStorage.increaseBalance(to, tokenId, amount);
+        ScoutProtocolNFTStorage.decreaseBalance(from, tokenId, amount);
+        ScoutProtocolNFTStorage.increaseBalance(to, tokenId, amount);
 
         emit TransferSingle(_msgSender(), from, to, tokenId, amount);
 
@@ -151,17 +162,14 @@ contract ScoutProtocolBuilderNFTImplementation is
             uint256 id = tokenIds[i];
             uint256 amount = amounts[i];
 
-            uint256 fromBalance = ScoutProtocolBuilderNFTStorage.getBalance(
-                from,
-                id
-            );
+            uint256 fromBalance = ScoutProtocolNFTStorage.getBalance(from, id);
             require(
                 fromBalance >= amount,
                 "ERC1155: insufficient balance for transfer"
             );
 
-            ScoutProtocolBuilderNFTStorage.decreaseBalance(from, id, amount);
-            ScoutProtocolBuilderNFTStorage.increaseBalance(to, id, amount);
+            ScoutProtocolNFTStorage.decreaseBalance(from, id, amount);
+            ScoutProtocolNFTStorage.increaseBalance(to, id, amount);
         }
 
         emit TransferBatch(_msgSender(), from, to, tokenIds, amounts);
@@ -262,8 +270,8 @@ contract ScoutProtocolBuilderNFTImplementation is
     ) external onlyAdminOrMinter {
         require(bytes(_prefix).length > 0, "Empty base URI prefix not allowed");
         require(bytes(_suffix).length > 0, "Empty base URI suffix not allowed");
-        ScoutProtocolBuilderNFTStorage.setUriPrefix(_prefix);
-        ScoutProtocolBuilderNFTStorage.setUriSuffix(_suffix);
+        ScoutProtocolNFTStorage.setUriPrefix(_prefix);
+        ScoutProtocolNFTStorage.setUriSuffix(_suffix);
     }
 
     function registerBuilderToken(
@@ -275,9 +283,7 @@ contract ScoutProtocolBuilderNFTImplementation is
             "Builder ID must be a valid UUID"
         );
         require(
-            ScoutProtocolBuilderNFTStorage.getBuilderToTokenRegistry(
-                builderId
-            ) == 0,
+            ScoutProtocolNFTStorage.getBuilderToTokenRegistry(builderId) == 0,
             "Builder already registered"
         );
 
@@ -287,30 +293,29 @@ contract ScoutProtocolBuilderNFTImplementation is
         );
 
         require(
-            ScoutProtocolBuilderNFTStorage.getAddressToTokenRegistry(account) ==
-                0,
+            ScoutProtocolNFTStorage.getAddressToTokenRegistry(account) == 0,
             "Account already linked to a builder"
         );
 
-        uint256 _nextTokenId = ScoutProtocolBuilderNFTStorage.getNextTokenId();
+        uint256 _nextTokenId = ScoutProtocolNFTStorage.getNextTokenId();
 
         // Update mappings in storage
-        ScoutProtocolBuilderNFTStorage.setBuilderToTokenRegistry(
+        ScoutProtocolNFTStorage.setBuilderToTokenRegistry(
             builderId,
             _nextTokenId
         );
-        ScoutProtocolBuilderNFTStorage.setTokenToBuilderRegistry(
+        ScoutProtocolNFTStorage.setTokenToBuilderRegistry(
             _nextTokenId,
             builderId
         );
 
         _updateBuilderTokenAddress(_nextTokenId, account);
 
-        // Emit BuilderTokenRegistered event
-        emit BuilderTokenRegistered(_nextTokenId, builderId);
+        // Emit TokenRegistered event
+        emit TokenRegistered(_nextTokenId, builderId);
 
         // Increment the next token ID
-        ScoutProtocolBuilderNFTStorage.incrementNextTokenId();
+        ScoutProtocolNFTStorage.incrementNextTokenId();
     }
 
     function mint(
@@ -318,13 +323,7 @@ contract ScoutProtocolBuilderNFTImplementation is
         uint256 tokenId,
         uint256 amount
     ) external onlyWhenNotPaused {
-        require(account != address(0), "Invalid account address");
-
-        string memory builderId = ScoutProtocolBuilderNFTStorage
-            .getTokenToBuilderRegistry(tokenId);
-
-        // Throws if token ID is not registered
-        require(bytes(builderId).length != 0, "Token ID not registered");
+        _validateMint(account, tokenId, amount);
 
         uint256 _price = getTokenPurchasePrice(tokenId, amount);
         address _paymentToken = MemoryUtils._getAddress(
@@ -336,21 +335,14 @@ contract ScoutProtocolBuilderNFTImplementation is
 
         forwardProceeds(tokenId, _price);
 
-        ScoutProtocolBuilderNFTStorage.increaseBalance(
-            account,
-            tokenId,
-            amount
-        );
-
-        // Emit TransferSingle event
-        emit TransferSingle(_msgSender(), address(0), account, tokenId, amount);
+        _mintTo(account, tokenId, amount);
     }
 
     function forwardProceeds(uint256 tokenId, uint256 cost) internal {
         address _paymentToken = ERC20Token();
 
         // Transfer builder rewards to builder ----------------------------
-        address _builderAddress = ScoutProtocolBuilderNFTStorage
+        address _builderAddress = ScoutProtocolNFTStorage
             .getTokenToAddressRegistry(tokenId);
 
         require(
@@ -365,13 +357,13 @@ contract ScoutProtocolBuilderNFTImplementation is
             _builderAddress
         );
 
-        bool _transferSuccess = IERC20(_paymentToken).transferFrom(
+        bool _transferToBuilderSuccess = IERC20(_paymentToken).transferFrom(
             _msgSender(),
             _builderAddress,
             _builderRewards
         );
 
-        require(_transferSuccess, "Builder transfer failed");
+        require(_transferToBuilderSuccess, "Builder transfer failed");
 
         uint256 _builderAddressBalanceAfterTransfer = IERC20(_paymentToken)
             .balanceOf(_builderAddress);
@@ -393,10 +385,15 @@ contract ScoutProtocolBuilderNFTImplementation is
         uint256 _proceedsReceiverAmount = cost - _builderRewards;
 
         // Transfer payment from user to proceeds receiver
-        IERC20(_paymentToken).transferFrom(
+        bool _transferToProceedsSuccess = IERC20(_paymentToken).transferFrom(
             _msgSender(),
             _proceedsReceiver,
             _proceedsReceiverAmount
+        );
+
+        require(
+            _transferToProceedsSuccess,
+            "Transfer to proceeds receiver failed"
         );
 
         uint256 _proceedsReceiverBalanceAfterTransfer = IERC20(_paymentToken)
@@ -418,22 +415,43 @@ contract ScoutProtocolBuilderNFTImplementation is
             account == _msgSender() || isApprovedForAll(account, _msgSender()),
             "ERC1155: caller is not owner nor approved"
         );
-        ScoutProtocolBuilderNFTStorage.decreaseBalance(
-            account,
-            tokenId,
-            amount
-        );
+        ScoutProtocolNFTStorage.decreaseBalance(account, tokenId, amount);
         // Emit TransferSingle event with the burn details
         emit TransferSingle(_msgSender(), account, address(0), tokenId, amount);
     }
 
     function setMinter(address _minter) external onlyAdmin {
         require(_minter != address(0), "Invalid address");
+        address previousMinter = MemoryUtils._getAddress(
+            MemoryUtils.MINTER_SLOT
+        );
         _setRole(MemoryUtils.MINTER_SLOT, _minter);
+        emit MinterSet(previousMinter, _minter);
     }
 
     function minter() public view returns (address) {
         return MemoryUtils._getAddress(MemoryUtils.MINTER_SLOT);
+    }
+
+    function mintTo(
+        address account,
+        uint256 tokenId,
+        uint256 amount
+    ) external onlyAdminOrMinter {
+        _validateMint(account, tokenId, amount);
+        _mintTo(account, tokenId, amount);
+    }
+
+    function _mintTo(
+        address account,
+        uint256 tokenId,
+        uint256 amount
+    ) internal {
+        // Mint tokens
+        ScoutProtocolNFTStorage.increaseBalance(account, tokenId, amount);
+
+        // Emit TransferSingle event
+        emit TransferSingle(_msgSender(), address(0), account, tokenId, amount);
     }
 
     function ERC20Token() public view returns (address) {
@@ -456,13 +474,13 @@ contract ScoutProtocolBuilderNFTImplementation is
     }
 
     function totalSupply(uint256 tokenId) public view returns (uint256) {
-        return ScoutProtocolBuilderNFTStorage.getTotalSupply(tokenId);
+        return ScoutProtocolNFTStorage.getTotalSupply(tokenId);
     }
 
     function getBuilderIdForToken(
         uint256 tokenId
-    ) external view returns (string memory) {
-        string memory builderId = ScoutProtocolBuilderNFTStorage
+    ) public view returns (string memory) {
+        string memory builderId = ScoutProtocolNFTStorage
             .getTokenToBuilderRegistry(tokenId);
         require(bytes(builderId).length > 0, "Token not yet allocated");
         return builderId;
@@ -471,8 +489,9 @@ contract ScoutProtocolBuilderNFTImplementation is
     function getTokenIdForBuilder(
         string calldata builderId
     ) external view returns (uint256) {
-        uint256 tokenId = ScoutProtocolBuilderNFTStorage
-            .getBuilderToTokenRegistry(builderId);
+        uint256 tokenId = ScoutProtocolNFTStorage.getBuilderToTokenRegistry(
+            builderId
+        );
         require(tokenId != 0, "Builder not registered");
         return tokenId;
     }
@@ -480,8 +499,7 @@ contract ScoutProtocolBuilderNFTImplementation is
     function getBuilderAddressForToken(
         uint256 tokenId
     ) public view returns (address) {
-        return
-            ScoutProtocolBuilderNFTStorage.getTokenToAddressRegistry(tokenId);
+        return ScoutProtocolNFTStorage.getTokenToAddressRegistry(tokenId);
     }
 
     function updateBuilderTokenAddress(
@@ -496,6 +514,8 @@ contract ScoutProtocolBuilderNFTImplementation is
         );
 
         _updateBuilderTokenAddress(tokenId, newAddress);
+
+        emit BuilderAddressUpdated(tokenId, _currentBuilderAddress, newAddress);
     }
 
     function _updateBuilderTokenAddress(
@@ -504,32 +524,26 @@ contract ScoutProtocolBuilderNFTImplementation is
     ) internal {
         require(newAddress != address(0), "Invalid address");
 
-        string memory builderId = ScoutProtocolBuilderNFTStorage
+        string memory builderId = ScoutProtocolNFTStorage
             .getTokenToBuilderRegistry(tokenId);
         require(bytes(builderId).length > 0, "Token not yet allocated");
 
-        address _currentBuilderAddress = ScoutProtocolBuilderNFTStorage
+        address _currentBuilderAddress = ScoutProtocolNFTStorage
             .getTokenToAddressRegistry(tokenId);
 
-        ScoutProtocolBuilderNFTStorage.setTokenToAddressRegistry(
-            tokenId,
-            newAddress
-        );
+        ScoutProtocolNFTStorage.setTokenToAddressRegistry(tokenId, newAddress);
 
-        ScoutProtocolBuilderNFTStorage.setAddressToTokenRegistry(
-            newAddress,
-            tokenId
-        );
+        ScoutProtocolNFTStorage.setAddressToTokenRegistry(newAddress, tokenId);
 
         // Remove old builder address from address to token registry
-        ScoutProtocolBuilderNFTStorage.setAddressToTokenRegistry(
+        ScoutProtocolNFTStorage.setAddressToTokenRegistry(
             _currentBuilderAddress,
             0
         );
     }
 
     function totalBuilderTokens() external view returns (uint256) {
-        uint256 nextTokenId = ScoutProtocolBuilderNFTStorage.getNextTokenId();
+        uint256 nextTokenId = ScoutProtocolNFTStorage.getNextTokenId();
 
         return nextTokenId - 1;
     }
@@ -546,18 +560,22 @@ contract ScoutProtocolBuilderNFTImplementation is
         return
             string(
                 abi.encodePacked(
-                    ScoutProtocolBuilderNFTStorage.getUriPrefix(),
+                    ScoutProtocolNFTStorage.getUriPrefix(),
                     "/",
                     StringUtils._uint2str(_tokenId),
                     "/",
-                    ScoutProtocolBuilderNFTStorage.getUriSuffix()
+                    ScoutProtocolNFTStorage.getUriSuffix()
                 )
             );
     }
 
     function setProceedsReceiver(address receiver) external onlyAdmin {
         require(receiver != address(0), "Invalid address");
+        address previousReceiver = MemoryUtils._getAddress(
+            MemoryUtils.PROCEEDS_RECEIVER_SLOT
+        );
         MemoryUtils._setAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT, receiver);
+        emit ProceedsReceiverSet(previousReceiver, receiver);
     }
 
     function proceedsReceiver() public view returns (address) {
@@ -573,10 +591,47 @@ contract ScoutProtocolBuilderNFTImplementation is
     }
 
     function updatePriceIncrement(uint256 newIncrement) external onlyAdmin {
+        uint256 previousIncrement = MemoryUtils._getUint256(
+            MemoryUtils.PRICE_INCREMENT_SLOT
+        );
         MemoryUtils._setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, newIncrement);
+        emit PriceIncrementUpdated(previousIncrement, newIncrement);
     }
 
     function acceptUpgrade() public view returns (address) {
         return address(this);
+    }
+
+    function setMaxSupplyPerToken(uint256 newMaxSupply) external onlyAdmin {
+        require(newMaxSupply > 0, "Max supply must be greater than 0");
+
+        uint256 previousMaxSupply = MemoryUtils._getUint256(
+            ScoutProtocolNFTStorage.MAX_SUPPLY_SLOT
+        );
+        MemoryUtils._setUint256(
+            ScoutProtocolNFTStorage.MAX_SUPPLY_SLOT,
+            newMaxSupply
+        );
+
+        emit MaxSupplyPerTokenSet(previousMaxSupply, newMaxSupply);
+    }
+
+    function maxSupplyPerToken() public view returns (uint256) {
+        return MemoryUtils._getUint256(ScoutProtocolNFTStorage.MAX_SUPPLY_SLOT);
+    }
+
+    function _validateMint(
+        address account,
+        uint256 tokenId,
+        uint256 amount
+    ) internal view {
+        uint256 totalSupplyForTokenId = totalSupply(tokenId);
+
+        require(
+            totalSupplyForTokenId + amount <= maxSupplyPerToken(),
+            "Token supply limit reached"
+        );
+        require(account != address(0), "Invalid account address");
+        getBuilderIdForToken(tokenId);
     }
 }

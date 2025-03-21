@@ -695,7 +695,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
           type: 'string'
         }
       ],
-      name: 'BuilderTokenRegistered',
+      name: 'TokenRegistered',
       type: 'event'
     },
     {

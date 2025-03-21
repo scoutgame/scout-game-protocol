@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../SeasonOne/libs/MemoryUtils.sol";
+import "../../libs/MemoryUtils.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../libs/ScoutProtocolAccessControl.sol";
+import "../../libs/StringUtils.sol";
 
 library ImplementationStorage {
     struct Layout {
@@ -16,6 +18,7 @@ library ImplementationStorage {
         mapping(uint256 => uint256) totalSupply;
         mapping(uint256 => string) tokenToBuilderRegistry;
         mapping(string => uint256) builderToTokenRegistry;
+        mapping(uint256 => address) tokenToAddressRegistry;
         string baseUri;
         string uriPrefix;
         string uriSuffix;
@@ -34,31 +37,42 @@ library ImplementationStorage {
     }
 }
 
-contract ScoutGameStarterPackNFTImplementation is
+contract ScoutProtocolStarterNFTImplementation is
     Context,
     ERC165,
     IERC1155,
-    IERC1155MetadataURI
+    IERC1155MetadataURI,
+    ScoutProtocolAccessControl
 {
     using MemoryUtils for bytes32;
     using Address for address;
 
     // Events
     event BuilderScouted(uint256 tokenId, uint256 amount, string scout);
-    event BuilderTokenRegistered(uint256 tokenId, string builderId);
-
-    modifier onlyAdmin() {
-        require(
-            MemoryUtils.isAdmin(msg.sender),
-            "Proxy: caller is not the admin"
-        );
-        _;
-    }
+    event TokenRegistered(uint256 tokenId, string builderId);
+    event ERC20ContractUpdated(
+        address indexed previousContract,
+        address indexed newContract
+    );
+    event MinterSet(address indexed previousMinter, address indexed newMinter);
+    event BuilderAddressUpdated(
+        uint256 indexed tokenId,
+        address indexed previousAddress,
+        address indexed newAddress
+    );
+    event ProceedsReceiverSet(
+        address indexed previousReceiver,
+        address indexed newReceiver
+    );
+    event PriceIncrementUpdated(
+        uint256 previousIncrement,
+        uint256 newIncrement
+    );
 
     modifier onlyAdminOrMinter() {
         require(
-            MemoryUtils.isAdmin(msg.sender) || MemoryUtils.isMinter(msg.sender),
-            "Proxy: caller is not the admin or minter"
+            _isAdmin() || _hasRole(MemoryUtils.MINTER_SLOT),
+            "Caller is not the admin or minter"
         );
         _;
     }
@@ -76,15 +90,23 @@ contract ScoutGameStarterPackNFTImplementation is
 
     function registerBuilderToken(
         string calldata builderId,
-        uint256 builderTokenId
+        uint256 builderTokenId,
+        address builderWallet
     ) external onlyAdminOrMinter {
-        require(_isValidUUID(builderId), "Builder ID must be a valid UUID");
+        require(
+            StringUtils._isValidUUID(builderId),
+            "Builder ID must be a valid UUID"
+        );
         require(
             ImplementationStorage.layout().builderToTokenRegistry[builderId] ==
                 0,
             "Builder already registered"
         );
         require(builderTokenId > 0, "Builder token ID must be greater than 0");
+        require(
+            builderWallet != address(0),
+            "Invalid builder wallet address, must be non empty address"
+        );
 
         string memory builderTokenIdString = ImplementationStorage
             .layout()
@@ -103,8 +125,13 @@ contract ScoutGameStarterPackNFTImplementation is
             builderId
         ] = builderTokenId;
 
-        // Emit BuilderTokenRegistered event
-        emit BuilderTokenRegistered(builderTokenId, builderId);
+        // Store the builder wallet address
+        ImplementationStorage.layout().tokenToAddressRegistry[
+            builderTokenId
+        ] = builderWallet;
+
+        // Emit TokenRegistered event
+        emit TokenRegistered(builderTokenId, builderId);
 
         ImplementationStorage.layout().totalBuilders++;
     }
@@ -232,20 +259,83 @@ contract ScoutGameStarterPackNFTImplementation is
         _validateMint(account, tokenId, amount, scout);
 
         uint256 price = getTokenPurchasePrice(amount);
-        address paymentToken = MemoryUtils.getAddress(
-            MemoryUtils.PAYMENT_ERC20_TOKEN_SLOT
+        address paymentToken = MemoryUtils._getAddress(
+            MemoryUtils.CLAIMS_TOKEN_SLOT
         );
-        address proceedsReceiver = MemoryUtils.getAddress(
+        address proceedsReceiver = MemoryUtils._getAddress(
             MemoryUtils.PROCEEDS_RECEIVER_SLOT
         );
 
         require(paymentToken != address(0), "Payment token not set");
         require(proceedsReceiver != address(0), "Proceeds receiver not set");
 
-        // Transfer payment from user to proceeds receiver
-        IERC20(paymentToken).transferFrom(msg.sender, proceedsReceiver, price);
+        forwardProceeds(tokenId, price);
 
         _mintTo(account, tokenId, amount, scout);
+    }
+
+    function forwardProceeds(uint256 tokenId, uint256 cost) internal {
+        address _paymentToken = _getERC20Contract();
+
+        // Transfer builder rewards to builder ----------------------------
+        address _builderAddress = ImplementationStorage
+            .layout()
+            .tokenToAddressRegistry[tokenId];
+
+        require(
+            _builderAddress != address(0),
+            "Builder does not have an address to forward proceeds to"
+        );
+
+        // Builder rewards are 20% of the purchase price
+        uint256 _builderRewards = (cost * 2) / 10;
+
+        uint256 _builderAddressBalance = IERC20(_paymentToken).balanceOf(
+            _builderAddress
+        );
+
+        bool _transferSuccess = IERC20(_paymentToken).transferFrom(
+            _msgSender(),
+            _builderAddress,
+            _builderRewards
+        );
+
+        require(_transferSuccess, "Builder transfer failed");
+
+        uint256 _builderAddressBalanceAfterTransfer = IERC20(_paymentToken)
+            .balanceOf(_builderAddress);
+
+        require(
+            _builderAddressBalanceAfterTransfer ==
+                _builderAddressBalance + _builderRewards,
+            "Builder transfer failed"
+        );
+
+        // Forward remaining 80% to proceeds receiver ---------------------
+        address _proceedsReceiver = _getProceedsReceiver();
+
+        uint256 _proceedsReceiverBalance = IERC20(_paymentToken).balanceOf(
+            _proceedsReceiver
+        );
+
+        // Forward remaining 80% to proceeds receiver
+        uint256 _proceedsReceiverAmount = cost - _builderRewards;
+
+        // Transfer payment from user to proceeds receiver
+        IERC20(_paymentToken).transferFrom(
+            _msgSender(),
+            _proceedsReceiver,
+            _proceedsReceiverAmount
+        );
+
+        uint256 _proceedsReceiverBalanceAfterTransfer = IERC20(_paymentToken)
+            .balanceOf(_proceedsReceiver);
+
+        require(
+            _proceedsReceiverBalanceAfterTransfer ==
+                _proceedsReceiverBalance + _proceedsReceiverAmount,
+            "Transfer failed"
+        );
     }
 
     function burn(
@@ -277,11 +367,15 @@ contract ScoutGameStarterPackNFTImplementation is
 
     function setMinter(address minter) external onlyAdmin {
         require(minter != address(0), "Invalid address");
-        MemoryUtils.setAddress(MemoryUtils.MINTER_SLOT, minter);
+        address previousMinter = MemoryUtils._getAddress(
+            MemoryUtils.MINTER_SLOT
+        );
+        MemoryUtils._setAddress(MemoryUtils.MINTER_SLOT, minter);
+        emit MinterSet(previousMinter, minter);
     }
 
     function getMinter() external view returns (address) {
-        return MemoryUtils.getAddress(MemoryUtils.MINTER_SLOT);
+        return MemoryUtils._getAddress(MemoryUtils.MINTER_SLOT);
     }
 
     function mintTo(
@@ -323,7 +417,7 @@ contract ScoutGameStarterPackNFTImplementation is
         uint256 amount,
         string calldata scout
     ) internal view {
-        require(_isValidUUID(scout), "Scout must be a valid UUID");
+        require(StringUtils._isValidUUID(scout), "Scout must be a valid UUID");
         require(amount == 1, "Can only mint 1 token per builder and scout");
         require(
             balanceOfScout(scout, tokenId) == 0,
@@ -336,20 +430,25 @@ contract ScoutGameStarterPackNFTImplementation is
 
     function updateERC20Contract(address newContract) external onlyAdmin {
         require(newContract != address(0), "Invalid address");
-        MemoryUtils.setAddress(
-            MemoryUtils.PAYMENT_ERC20_TOKEN_SLOT,
-            newContract
+        address previousContract = MemoryUtils._getAddress(
+            MemoryUtils.CLAIMS_TOKEN_SLOT
         );
+        MemoryUtils._setAddress(MemoryUtils.CLAIMS_TOKEN_SLOT, newContract);
+        emit ERC20ContractUpdated(previousContract, newContract);
     }
 
     function getERC20Contract() external view returns (address) {
-        return MemoryUtils.getAddress(MemoryUtils.PAYMENT_ERC20_TOKEN_SLOT);
+        return _getERC20Contract();
+    }
+
+    function _getERC20Contract() internal view returns (address) {
+        return MemoryUtils._getAddress(MemoryUtils.CLAIMS_TOKEN_SLOT);
     }
 
     function getTokenPurchasePrice(
         uint256 amount
     ) public view returns (uint256) {
-        uint256 priceIncrement = MemoryUtils.getUint256(
+        uint256 priceIncrement = MemoryUtils._getUint256(
             MemoryUtils.PRICE_INCREMENT_SLOT
         );
 
@@ -469,66 +568,30 @@ contract ScoutGameStarterPackNFTImplementation is
                 abi.encodePacked(
                     _getUriPrefix(),
                     "/",
-                    _uint2str(_tokenId),
+                    StringUtils._uint2str(_tokenId),
                     "/",
                     _getUriSuffix()
                 )
             );
     }
 
-    // Utility function to convert uint to string
-    function _uint2str(uint256 _i) internal pure returns (string memory) {
-        if (_i == 0) {
-            return "0";
-        }
-
-        uint256 temp = _i;
-        uint256 digits;
-
-        // Count the number of digits in the number
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-
-        // Create a byte array to store the characters of the number
-        bytes memory buffer = new bytes(digits);
-
-        // Extract each digit from the least significant to the most significant
-        while (_i != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(_i % 10)));
-            _i /= 10;
-        }
-
-        return string(buffer);
-    }
-
     function isValidUUID(string memory uuid) external pure returns (bool) {
-        return _isValidUUID(uuid);
-    }
-
-    function _isValidUUID(string memory uuid) internal pure returns (bool) {
-        bytes memory uuidBytes = bytes(uuid);
-        return
-            uuidBytes.length == 36 &&
-            uuidBytes[8] == "-" &&
-            uuidBytes[13] == "-" &&
-            uuidBytes[18] == "-" &&
-            uuidBytes[23] == "-";
+        return StringUtils._isValidUUID(uuid);
     }
 
     function name() external view returns (string memory) {
-        return MemoryUtils.getString(MemoryUtils.TOKEN_NAME);
+        return MemoryUtils._getString(MemoryUtils.TOKEN_NAME);
     }
 
     function symbol() external view returns (string memory) {
-        return MemoryUtils.getString(MemoryUtils.TOKEN_SYMBOL);
+        return MemoryUtils._getString(MemoryUtils.TOKEN_SYMBOL);
     }
 
     function setProceedsReceiver(address receiver) external onlyAdmin {
         require(receiver != address(0), "Invalid address");
-        MemoryUtils.setAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT, receiver);
+        address previousReceiver = _getProceedsReceiver();
+        MemoryUtils._setAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT, receiver);
+        emit ProceedsReceiverSet(previousReceiver, receiver);
     }
 
     function getProceedsReceiver() external view returns (address) {
@@ -536,14 +599,52 @@ contract ScoutGameStarterPackNFTImplementation is
     }
 
     function _getProceedsReceiver() internal view returns (address) {
-        return MemoryUtils.getAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT);
+        return MemoryUtils._getAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT);
     }
 
     function updatePriceIncrement(uint256 newIncrement) external onlyAdmin {
-        MemoryUtils.setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, newIncrement);
+        uint256 previousIncrement = MemoryUtils._getUint256(
+            MemoryUtils.PRICE_INCREMENT_SLOT
+        );
+        MemoryUtils._setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, newIncrement);
+        emit PriceIncrementUpdated(previousIncrement, newIncrement);
     }
 
     function getPriceIncrement() public view returns (uint256) {
-        return MemoryUtils.getUint256(MemoryUtils.PRICE_INCREMENT_SLOT);
+        return MemoryUtils._getUint256(MemoryUtils.PRICE_INCREMENT_SLOT);
+    }
+
+    function getBuilderAddressForToken(
+        uint256 tokenId
+    ) external view returns (address) {
+        return ImplementationStorage.layout().tokenToAddressRegistry[tokenId];
+    }
+
+    function updateBuilderTokenAddress(
+        uint256 tokenId,
+        address newAddress
+    ) external {
+        address currentBuilderAddress = ImplementationStorage
+            .layout()
+            .tokenToAddressRegistry[tokenId];
+
+        require(
+            _isAdmin() || currentBuilderAddress == _msgSender(),
+            "Caller is not admin or builder"
+        );
+
+        require(newAddress != address(0), "Invalid address");
+
+        string memory builderId = ImplementationStorage
+            .layout()
+            .tokenToBuilderRegistry[tokenId];
+        require(bytes(builderId).length > 0, "Token not yet allocated");
+
+        // Update the builder address
+        ImplementationStorage.layout().tokenToAddressRegistry[
+            tokenId
+        ] = newAddress;
+
+        emit BuilderAddressUpdated(tokenId, currentBuilderAddress, newAddress);
     }
 }
