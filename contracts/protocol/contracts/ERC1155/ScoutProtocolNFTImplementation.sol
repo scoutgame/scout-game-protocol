@@ -27,6 +27,21 @@ contract ScoutProtocolNFTImplementation is
 
     // Events
     event TokenRegistered(uint256 tokenId, string builderId);
+    event MinterSet(address indexed previousMinter, address indexed newMinter);
+    event BuilderAddressUpdated(
+        uint256 indexed tokenId,
+        address indexed previousAddress,
+        address indexed newAddress
+    );
+    event ProceedsReceiverSet(
+        address indexed previousReceiver,
+        address indexed newReceiver
+    );
+    event PriceIncrementUpdated(
+        uint256 previousIncrement,
+        uint256 newIncrement
+    );
+    event MaxSupplyPerTokenSet(uint256 previousMaxSupply, uint256 newMaxSupply);
 
     modifier onlyAdminOrMinter() {
         require(
@@ -407,7 +422,11 @@ contract ScoutProtocolNFTImplementation is
 
     function setMinter(address _minter) external onlyAdmin {
         require(_minter != address(0), "Invalid address");
+        address previousMinter = MemoryUtils._getAddress(
+            MemoryUtils.MINTER_SLOT
+        );
         _setRole(MemoryUtils.MINTER_SLOT, _minter);
+        emit MinterSet(previousMinter, _minter);
     }
 
     function minter() public view returns (address) {
@@ -495,6 +514,8 @@ contract ScoutProtocolNFTImplementation is
         );
 
         _updateBuilderTokenAddress(tokenId, newAddress);
+
+        emit BuilderAddressUpdated(tokenId, _currentBuilderAddress, newAddress);
     }
 
     function _updateBuilderTokenAddress(
@@ -550,7 +571,11 @@ contract ScoutProtocolNFTImplementation is
 
     function setProceedsReceiver(address receiver) external onlyAdmin {
         require(receiver != address(0), "Invalid address");
+        address previousReceiver = MemoryUtils._getAddress(
+            MemoryUtils.PROCEEDS_RECEIVER_SLOT
+        );
         MemoryUtils._setAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT, receiver);
+        emit ProceedsReceiverSet(previousReceiver, receiver);
     }
 
     function proceedsReceiver() public view returns (address) {
@@ -566,7 +591,11 @@ contract ScoutProtocolNFTImplementation is
     }
 
     function updatePriceIncrement(uint256 newIncrement) external onlyAdmin {
+        uint256 previousIncrement = MemoryUtils._getUint256(
+            MemoryUtils.PRICE_INCREMENT_SLOT
+        );
         MemoryUtils._setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, newIncrement);
+        emit PriceIncrementUpdated(previousIncrement, newIncrement);
     }
 
     function acceptUpgrade() public view returns (address) {
@@ -576,10 +605,15 @@ contract ScoutProtocolNFTImplementation is
     function setMaxSupplyPerToken(uint256 newMaxSupply) external onlyAdmin {
         require(newMaxSupply > 0, "Max supply must be greater than 0");
 
+        uint256 previousMaxSupply = MemoryUtils._getUint256(
+            ScoutProtocolNFTStorage.MAX_SUPPLY_SLOT
+        );
         MemoryUtils._setUint256(
             ScoutProtocolNFTStorage.MAX_SUPPLY_SLOT,
             newMaxSupply
         );
+
+        emit MaxSupplyPerTokenSet(previousMaxSupply, newMaxSupply);
     }
 
     function maxSupplyPerToken() public view returns (uint256) {

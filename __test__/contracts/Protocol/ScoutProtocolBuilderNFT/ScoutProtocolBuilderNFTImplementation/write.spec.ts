@@ -1337,6 +1337,43 @@ describe('ScoutProtocolNFTImplementation', function () {
       });
     });
 
+    describe('events', function () {
+      it('emits BuilderAddressUpdated event', async function () {
+        const builderAddress = randomEthereumAddress();
+
+        const { tokenId } = await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT,
+          builderAddress
+        });
+
+        const newBuilderAddress = randomEthereumAddress();
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.updateBuilderTokenAddress(
+          [tokenId, newBuilderAddress],
+          {
+            account: erc1155AdminAccount.account
+          }
+        );
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['BuilderAddressUpdated']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'BuilderAddressUpdated');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.tokenId).toEqual(tokenId);
+        expect(decodedEvent!.args.previousAddress.toLowerCase()).toEqual(builderAddress.toLowerCase());
+        expect(decodedEvent!.args.newAddress.toLowerCase()).toEqual(newBuilderAddress.toLowerCase());
+      });
+    });
+
     describe('permissions', function () {
       it('Allows current builder to update their address', async function () {
         const builderAccount = await walletFromKey();
@@ -1446,6 +1483,32 @@ describe('ScoutProtocolNFTImplementation', function () {
 
         const maxSupply = await scoutProtocolBuilderNFT.builderNftContract.read.maxSupplyPerToken();
         expect(maxSupply).toEqual(newMaxSupply);
+      });
+    });
+
+    describe('events', function () {
+      it('emits MaxSupplyPerTokenSet event', async function () {
+        const previousMaxSupply = await scoutProtocolBuilderNFT.builderNftContract.read.maxSupplyPerToken();
+        const newMaxSupply = BigInt(200);
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([newMaxSupply], {
+          account: erc1155AdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['MaxSupplyPerTokenSet']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'MaxSupplyPerTokenSet');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousMaxSupply).toEqual(previousMaxSupply);
+        expect(decodedEvent!.args.newMaxSupply).toEqual(newMaxSupply);
       });
     });
 
@@ -1655,6 +1718,129 @@ describe('ScoutProtocolNFTImplementation', function () {
             account: erc1155AdminAccount.account
           })
         ).rejects.toThrow('Token supply limit reached');
+      });
+    });
+  });
+
+  describe('setMinter()', function () {
+    describe('effects', function () {
+      it('sets the minter', async function () {
+        await scoutProtocolBuilderNFT.builderNftContract.write.setMinter([userAccount.account.address], {
+          account: erc1155AdminAccount.account
+        });
+
+        const minter = await scoutProtocolBuilderNFT.builderNftContract.read.minter();
+        expect(getAddress(minter)).toEqual(getAddress(userAccount.account.address));
+      });
+    });
+
+    describe('events', function () {
+      it('emits MinterSet event', async function () {
+        const previousMinter = await scoutProtocolBuilderNFT.builderNftContract.read.minter();
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.setMinter(
+          [userAccount.account.address],
+          {
+            account: erc1155AdminAccount.account
+          }
+        );
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['MinterSet']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'MinterSet');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousMinter.toLowerCase()).toEqual(previousMinter.toLowerCase());
+        expect(decodedEvent!.args.newMinter.toLowerCase()).toEqual(userAccount.account.address.toLowerCase());
+      });
+    });
+  });
+
+  describe('setProceedsReceiver()', function () {
+    describe('effects', function () {
+      it('sets the proceeds receiver', async function () {
+        const newReceiver = randomEthereumAddress();
+
+        await scoutProtocolBuilderNFT.builderNftContract.write.setProceedsReceiver([newReceiver], {
+          account: erc1155AdminAccount.account
+        });
+
+        const receiver = await scoutProtocolBuilderNFT.builderNftContract.read.proceedsReceiver();
+        expect(receiver.toLowerCase()).toEqual(newReceiver.toLowerCase());
+      });
+    });
+
+    describe('events', function () {
+      it('emits ProceedsReceiverSet event', async function () {
+        const previousReceiver = await scoutProtocolBuilderNFT.builderNftContract.read.proceedsReceiver();
+        const newReceiver = randomEthereumAddress();
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.setProceedsReceiver([newReceiver], {
+          account: erc1155AdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['ProceedsReceiverSet']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'ProceedsReceiverSet');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousReceiver.toLowerCase()).toEqual(previousReceiver.toLowerCase());
+        expect(decodedEvent!.args.newReceiver.toLowerCase()).toEqual(newReceiver.toLowerCase());
+      });
+    });
+  });
+
+  describe('updatePriceIncrement()', function () {
+    describe('effects', function () {
+      it('updates the price increment', async function () {
+        const newIncrement = BigInt(1000000);
+
+        await scoutProtocolBuilderNFT.builderNftContract.write.updatePriceIncrement([newIncrement], {
+          account: erc1155AdminAccount.account
+        });
+
+        const increment = await scoutProtocolBuilderNFT.builderNftContract.read.getPriceIncrement();
+        expect(increment).toEqual(newIncrement);
+      });
+    });
+
+    describe('events', function () {
+      it('emits PriceIncrementUpdated event', async function () {
+        const previousIncrement = await scoutProtocolBuilderNFT.builderNftContract.read.getPriceIncrement();
+        const newIncrement = BigInt(2000000);
+
+        const txResponse = await scoutProtocolBuilderNFT.builderNftContract.write.updatePriceIncrement([newIncrement], {
+          account: erc1155AdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await userAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: scoutProtocolBuilderNFT.builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['PriceIncrementUpdated']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'PriceIncrementUpdated');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousIncrement).toEqual(previousIncrement);
+        expect(decodedEvent!.args.newIncrement).toEqual(newIncrement);
       });
     });
   });
