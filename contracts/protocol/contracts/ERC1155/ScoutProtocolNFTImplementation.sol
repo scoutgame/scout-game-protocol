@@ -308,14 +308,7 @@ contract ScoutProtocolNFTImplementation is
         uint256 tokenId,
         uint256 amount
     ) external onlyWhenNotPaused {
-        uint256 totalSupplyForTokenId = totalSupply(tokenId);
-
-        require(
-            totalSupplyForTokenId + amount <= maxSupplyPerToken(),
-            "Token supply limit reached"
-        );
-
-        _validateMint(account, tokenId);
+        _validateMint(account, tokenId, amount);
 
         uint256 _price = getTokenPurchasePrice(tokenId, amount);
         address _paymentToken = MemoryUtils._getAddress(
@@ -349,13 +342,13 @@ contract ScoutProtocolNFTImplementation is
             _builderAddress
         );
 
-        bool _transferSuccess = IERC20(_paymentToken).transferFrom(
+        bool _transferToBuilderSuccess = IERC20(_paymentToken).transferFrom(
             _msgSender(),
             _builderAddress,
             _builderRewards
         );
 
-        require(_transferSuccess, "Builder transfer failed");
+        require(_transferToBuilderSuccess, "Builder transfer failed");
 
         uint256 _builderAddressBalanceAfterTransfer = IERC20(_paymentToken)
             .balanceOf(_builderAddress);
@@ -377,10 +370,15 @@ contract ScoutProtocolNFTImplementation is
         uint256 _proceedsReceiverAmount = cost - _builderRewards;
 
         // Transfer payment from user to proceeds receiver
-        IERC20(_paymentToken).transferFrom(
+        bool _transferToProceedsSuccess = IERC20(_paymentToken).transferFrom(
             _msgSender(),
             _proceedsReceiver,
             _proceedsReceiverAmount
+        );
+
+        require(
+            _transferToProceedsSuccess,
+            "Transfer to proceeds receiver failed"
         );
 
         uint256 _proceedsReceiverBalanceAfterTransfer = IERC20(_paymentToken)
@@ -421,7 +419,7 @@ contract ScoutProtocolNFTImplementation is
         uint256 tokenId,
         uint256 amount
     ) external onlyAdminOrMinter {
-        _validateMint(account, tokenId);
+        _validateMint(account, tokenId, amount);
         _mintTo(account, tokenId, amount);
     }
 
@@ -588,7 +586,17 @@ contract ScoutProtocolNFTImplementation is
         return MemoryUtils._getUint256(ScoutProtocolNFTStorage.MAX_SUPPLY_SLOT);
     }
 
-    function _validateMint(address account, uint256 tokenId) internal view {
+    function _validateMint(
+        address account,
+        uint256 tokenId,
+        uint256 amount
+    ) internal view {
+        uint256 totalSupplyForTokenId = totalSupply(tokenId);
+
+        require(
+            totalSupplyForTokenId + amount <= maxSupplyPerToken(),
+            "Token supply limit reached"
+        );
         require(account != address(0), "Invalid account address");
         getBuilderIdForToken(tokenId);
     }

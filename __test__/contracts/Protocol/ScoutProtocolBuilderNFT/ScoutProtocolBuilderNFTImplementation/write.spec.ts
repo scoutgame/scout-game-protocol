@@ -1618,5 +1618,44 @@ describe('ScoutProtocolNFTImplementation', function () {
         expect(balance).toBe(BigInt(15));
       });
     });
+
+    describe('validations', function () {
+      it('Reverts if token supply limit is reached', async function () {
+        const { secondUserAccount } = await generateWallets();
+        const testUserAddress = secondUserAccount.account.address;
+
+        const builderId = uuid();
+        const builderAddress = randomEthereumAddress();
+        await scoutProtocolBuilderNFT.builderNftContract.write.registerBuilderToken([builderId, builderAddress]);
+
+        // Admin mints tokens to the user
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([testUserAddress, BigInt(1), BigInt(10)])
+        ).resolves.toBeDefined();
+
+        await scoutProtocolBuilderNFT.builderNftContract.write.setMaxSupplyPerToken([BigInt(78)], {
+          account: erc1155AdminAccount.account
+        });
+
+        const { tokenId } = await registerBuilderToken({
+          wallet: erc1155AdminAccount,
+          nft: scoutProtocolBuilderNFT
+        });
+
+        await mintNft({
+          wallet: userAccount,
+          erc20: token,
+          nft: scoutProtocolBuilderNFT,
+          amount: 78,
+          tokenId
+        });
+
+        await expect(
+          scoutProtocolBuilderNFT.builderNftContract.write.mintTo([userAccount.account.address, tokenId, BigInt(1)], {
+            account: erc1155AdminAccount.account
+          })
+        ).rejects.toThrow('Token supply limit reached');
+      });
+    });
   });
 });
