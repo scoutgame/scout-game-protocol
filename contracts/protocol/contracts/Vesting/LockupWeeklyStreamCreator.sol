@@ -13,7 +13,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import {SablierV2NFTDescriptor} from "@sablier/v2-core/src/SablierV2NFTDescriptor.sol";
 import {SablierV2LockupTranched} from "@sablier/v2-core/src/SablierV2LockupTranched.sol";
 
-/// @notice Example of how to create a Lockup Linear stream.
 /// @dev This code is referenced in the docs: https://docs.sablier.com/contracts/v2/guides/create-stream/lockup-linear
 contract LockupWeeklyStreamCreator is Context {
     using Strings for uint256;
