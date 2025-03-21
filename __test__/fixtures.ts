@@ -1,7 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox-viem/network-helpers';
 
 import { deployBuilderNftContract } from './deployBuilderNft';
-import { deployBuilderNftStarterPackContract } from './deployBuilderNftStarterPack';
+import { deployBuilderNftStarterPackContract } from './deployBuilderStarterNft';
 import { deployEASContracts } from './deployEAS';
 import { deployProtocolContract } from './deployProtocol';
 import { deployScoutGamePreSeason02NftContract } from './deployScoutGamePreSeason02NftContract';

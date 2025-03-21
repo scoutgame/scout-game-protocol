@@ -549,7 +549,7 @@ export class BuilderNFTSeasonOneImplementation01Client {
           type: 'string'
         }
       ],
-      name: 'BuilderTokenRegistered',
+      name: 'TokenRegistered',
       type: 'event'
     },
     {

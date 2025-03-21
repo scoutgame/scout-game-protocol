@@ -12,7 +12,7 @@ function deployImplementation() {
 
 type DeployedImplementation = Awaited<ReturnType<typeof deployImplementation>>;
 
-describe('ScoutProtocolBuilderNFTProxy', function () {
+describe('ScoutProtocolNFTProxy', function () {
   let scoutProtocolBuilderNFT: ScoutProtocolBuilderNFTFixture;
   let erc1155AdminAccount: GeneratedWallet;
   let userAccount: GeneratedWallet;

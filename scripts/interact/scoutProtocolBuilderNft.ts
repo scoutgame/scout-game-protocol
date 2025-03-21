@@ -66,8 +66,8 @@ task('interactScoutProtocolBuilderNFT', 'Interact with Scout Protocol Builder NF
 
     const contract = await hre.viem.getContractAt(
       (functionType === 'Admin Functions'
-        ? 'ScoutProtocolBuilderNFTProxy'
-        : 'ScoutProtocolBuilderNFTImplementation') as any,
+        ? 'ScoutProtocolNFTProxy'
+        : 'ScoutProtocolNFTImplementation') as any,
       contractAddress as `0x${string}`
     );
 

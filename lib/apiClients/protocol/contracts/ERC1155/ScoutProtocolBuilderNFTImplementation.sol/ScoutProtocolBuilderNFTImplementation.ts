@@ -28,7 +28,7 @@ type ReadWriteWalletClient<
   PublicActions<transport, chain, account> & WalletActions<chain, account>
 >;
 
-export class ScoutProtocolBuilderNFTImplementationClient {
+export class ScoutProtocolNFTImplementationClient {
   private contractAddress: Address;
 
   private publicClient: PublicClient;
@@ -714,7 +714,7 @@ export class ScoutProtocolBuilderNFTImplementationClient {
           type: 'string'
         }
       ],
-      name: 'BuilderTokenRegistered',
+      name: 'TokenRegistered',
       type: 'event'
     },
     {
