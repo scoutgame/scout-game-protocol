@@ -4,7 +4,7 @@ import { getAddress } from 'viem';
 import type { ScoutProtocolBuilderNFTFixture } from '../../../../deployScoutProtocolBuilderNft';
 import { loadScoutProtocolBuilderNFTFixtures } from '../../../../fixtures';
 
-describe('ScoutProtocolBuilderNFTProxy', function () {
+describe('ScoutProtocolNFTProxy', function () {
   let scoutProtocolBuilderNFT: ScoutProtocolBuilderNFTFixture;
 
   beforeEach(async () => {

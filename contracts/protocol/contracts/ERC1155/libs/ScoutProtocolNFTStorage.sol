@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-library ScoutProtocolBuilderNFTStorage {
+library ScoutProtocolNFTStorage {
     struct Layout {
         mapping(uint256 => mapping(address => uint256)) balances;
         mapping(uint256 => uint256) totalSupply;
@@ -17,6 +17,8 @@ library ScoutProtocolBuilderNFTStorage {
     }
 
     bytes32 internal constant STORAGE_SLOT = keccak256("builderNFT.storage");
+    bytes32 internal constant MAX_SUPPLY_SLOT =
+        keccak256("builderNFT.maxSupply");
 
     function layout() internal pure returns (Layout storage l) {
         bytes32 slot = STORAGE_SLOT;

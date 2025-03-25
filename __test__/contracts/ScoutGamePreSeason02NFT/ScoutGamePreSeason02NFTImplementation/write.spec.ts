@@ -95,7 +95,7 @@ describe('ScoutGamePreSeason02NFTImplementation', function () {
     });
 
     describe('events', function () {
-      it('Emits BuilderTokenRegistered event new tokenId and builderId', async function () {
+      it('Emits TokenRegistered event new tokenId and builderId', async function () {
         const builderId = uuid(); // Sample UUID
         const txResponse = await builderNftSeason02.builderNftContract.write.registerBuilderToken([builderId], {
           account: erc1155AdminAccount.account
@@ -107,10 +107,10 @@ describe('ScoutGamePreSeason02NFTImplementation', function () {
         const parsedLogs = parseEventLogs({
           abi: builderNftSeason02.builderNftContract.abi,
           logs: receipt.logs,
-          eventName: ['BuilderTokenRegistered']
+          eventName: ['TokenRegistered']
         });
 
-        const decodedEvent = parsedLogs.find((log) => log.eventName === 'BuilderTokenRegistered');
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'TokenRegistered');
 
         expect(decodedEvent).toBeDefined();
 
