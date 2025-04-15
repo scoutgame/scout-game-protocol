@@ -180,6 +180,54 @@
   - allows the attester wallet to attest
   - prevents other wallets than the attester wallet from attesting
 
+## Contract: ScoutProtocolImplementation
+
+### Write Methods
+
+#### multiClaim
+
+- **Effects**:
+  - allows a user to perform multiple claims in a single call
+  - does not have any effect if a single claim is invalid
+- **Events**:
+  - emits a TokensClaimed event for each claim
+
+#### claim
+
+- **Effects**:
+  - allows a user to claim tokens correctly
+- **Permissions**:
+  - reverts when the contract is paused
+- **Validations**:
+  - denies claims if user has already claimed
+  - denies claims if user is at a time too far in the future
+  - reverts with invalid merkle proof
+  - reverts when merkle root is not set
+  - reverts when contract balance is insufficient
+- **Events**:
+  - emits a TokensClaimed event
+
+#### setWeeklyMerkleRoot
+
+- **Effects**:
+  - allows admin to set merkle root correctly
+  - sets the merkle root with a unique key
+- **Permissions**:
+  - reverts when the contract is paused
+  - reverts when not called by admin
+  - allows the claims manager to set the merkle root
+- **Validations**:
+  - reverts when the validUntil is in the past
+- **Events**:
+  - emits a WeeklyMerkleRootSet event
+
+#### setClaimsManager()
+
+- **Effects**:
+  - Sets the claims manager
+- **Permissions**:
+  - reverts when not called by admin
+
 ## Contract: ScoutProtocolNFTImplementation
 
 ### Write Methods
@@ -396,54 +444,6 @@
 
 - **Returns**:
   - Returns the current implementation address
-
-## Contract: ScoutProtocolImplementation
-
-### Write Methods
-
-#### multiClaim
-
-- **Effects**:
-  - allows a user to perform multiple claims in a single call
-  - does not have any effect if a single claim is invalid
-- **Events**:
-  - emits a TokensClaimed event for each claim
-
-#### claim
-
-- **Effects**:
-  - allows a user to claim tokens correctly
-- **Permissions**:
-  - reverts when the contract is paused
-- **Validations**:
-  - denies claims if user has already claimed
-  - denies claims if user is at a time too far in the future
-  - reverts with invalid merkle proof
-  - reverts when merkle root is not set
-  - reverts when contract balance is insufficient
-- **Events**:
-  - emits a TokensClaimed event
-
-#### setWeeklyMerkleRoot
-
-- **Effects**:
-  - allows admin to set merkle root correctly
-  - sets the merkle root with a unique key
-- **Permissions**:
-  - reverts when the contract is paused
-  - reverts when not called by admin
-  - allows the claims manager to set the merkle root
-- **Validations**:
-  - reverts when the validUntil is in the past
-- **Events**:
-  - emits a WeeklyMerkleRootSet event
-
-#### setClaimsManager()
-
-- **Effects**:
-  - Sets the claims manager
-- **Permissions**:
-  - reverts when not called by admin
 
 ## Contract: ScoutProtocolProxy
 

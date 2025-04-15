@@ -27,6 +27,21 @@ contract ScoutProtocolNFTImplementation is
 
     // Events
     event TokenRegistered(uint256 tokenId, string builderId);
+    event MinterSet(address indexed previousMinter, address indexed newMinter);
+    event BuilderAddressUpdated(
+        uint256 indexed tokenId,
+        address indexed previousAddress,
+        address indexed newAddress
+    );
+    event ProceedsReceiverSet(
+        address indexed previousReceiver,
+        address indexed newReceiver
+    );
+    event PriceIncrementUpdated(
+        uint256 previousIncrement,
+        uint256 newIncrement
+    );
+    event MaxSupplyPerTokenSet(uint256 previousMaxSupply, uint256 newMaxSupply);
 
     modifier onlyAdminOrMinter() {
         require(
@@ -308,14 +323,7 @@ contract ScoutProtocolNFTImplementation is
         uint256 tokenId,
         uint256 amount
     ) external onlyWhenNotPaused {
-        uint256 totalSupplyForTokenId = totalSupply(tokenId);
-
-        require(
-            totalSupplyForTokenId + amount <= maxSupplyPerToken(),
-            "Token supply limit reached"
-        );
-
-        _validateMint(account, tokenId);
+        _validateMint(account, tokenId, amount);
 
         uint256 _price = getTokenPurchasePrice(tokenId, amount);
         address _paymentToken = MemoryUtils._getAddress(
@@ -349,13 +357,13 @@ contract ScoutProtocolNFTImplementation is
             _builderAddress
         );
 
-        bool _transferSuccess = IERC20(_paymentToken).transferFrom(
+        bool _transferToBuilderSuccess = IERC20(_paymentToken).transferFrom(
             _msgSender(),
             _builderAddress,
             _builderRewards
         );
 
-        require(_transferSuccess, "Builder transfer failed");
+        require(_transferToBuilderSuccess, "Builder transfer failed");
 
         uint256 _builderAddressBalanceAfterTransfer = IERC20(_paymentToken)
             .balanceOf(_builderAddress);
@@ -377,10 +385,15 @@ contract ScoutProtocolNFTImplementation is
         uint256 _proceedsReceiverAmount = cost - _builderRewards;
 
         // Transfer payment from user to proceeds receiver
-        IERC20(_paymentToken).transferFrom(
+        bool _transferToProceedsSuccess = IERC20(_paymentToken).transferFrom(
             _msgSender(),
             _proceedsReceiver,
             _proceedsReceiverAmount
+        );
+
+        require(
+            _transferToProceedsSuccess,
+            "Transfer to proceeds receiver failed"
         );
 
         uint256 _proceedsReceiverBalanceAfterTransfer = IERC20(_paymentToken)
@@ -409,7 +422,11 @@ contract ScoutProtocolNFTImplementation is
 
     function setMinter(address _minter) external onlyAdmin {
         require(_minter != address(0), "Invalid address");
+        address previousMinter = MemoryUtils._getAddress(
+            MemoryUtils.MINTER_SLOT
+        );
         _setRole(MemoryUtils.MINTER_SLOT, _minter);
+        emit MinterSet(previousMinter, _minter);
     }
 
     function minter() public view returns (address) {
@@ -421,7 +438,7 @@ contract ScoutProtocolNFTImplementation is
         uint256 tokenId,
         uint256 amount
     ) external onlyAdminOrMinter {
-        _validateMint(account, tokenId);
+        _validateMint(account, tokenId, amount);
         _mintTo(account, tokenId, amount);
     }
 
@@ -497,6 +514,8 @@ contract ScoutProtocolNFTImplementation is
         );
 
         _updateBuilderTokenAddress(tokenId, newAddress);
+
+        emit BuilderAddressUpdated(tokenId, _currentBuilderAddress, newAddress);
     }
 
     function _updateBuilderTokenAddress(
@@ -552,7 +571,11 @@ contract ScoutProtocolNFTImplementation is
 
     function setProceedsReceiver(address receiver) external onlyAdmin {
         require(receiver != address(0), "Invalid address");
+        address previousReceiver = MemoryUtils._getAddress(
+            MemoryUtils.PROCEEDS_RECEIVER_SLOT
+        );
         MemoryUtils._setAddress(MemoryUtils.PROCEEDS_RECEIVER_SLOT, receiver);
+        emit ProceedsReceiverSet(previousReceiver, receiver);
     }
 
     function proceedsReceiver() public view returns (address) {
@@ -568,7 +591,11 @@ contract ScoutProtocolNFTImplementation is
     }
 
     function updatePriceIncrement(uint256 newIncrement) external onlyAdmin {
+        uint256 previousIncrement = MemoryUtils._getUint256(
+            MemoryUtils.PRICE_INCREMENT_SLOT
+        );
         MemoryUtils._setUint256(MemoryUtils.PRICE_INCREMENT_SLOT, newIncrement);
+        emit PriceIncrementUpdated(previousIncrement, newIncrement);
     }
 
     function acceptUpgrade() public view returns (address) {
@@ -578,17 +605,32 @@ contract ScoutProtocolNFTImplementation is
     function setMaxSupplyPerToken(uint256 newMaxSupply) external onlyAdmin {
         require(newMaxSupply > 0, "Max supply must be greater than 0");
 
+        uint256 previousMaxSupply = MemoryUtils._getUint256(
+            ScoutProtocolNFTStorage.MAX_SUPPLY_SLOT
+        );
         MemoryUtils._setUint256(
             ScoutProtocolNFTStorage.MAX_SUPPLY_SLOT,
             newMaxSupply
         );
+
+        emit MaxSupplyPerTokenSet(previousMaxSupply, newMaxSupply);
     }
 
     function maxSupplyPerToken() public view returns (uint256) {
         return MemoryUtils._getUint256(ScoutProtocolNFTStorage.MAX_SUPPLY_SLOT);
     }
 
-    function _validateMint(address account, uint256 tokenId) internal view {
+    function _validateMint(
+        address account,
+        uint256 tokenId,
+        uint256 amount
+    ) internal view {
+        uint256 totalSupplyForTokenId = totalSupply(tokenId);
+
+        require(
+            totalSupplyForTokenId + amount <= maxSupplyPerToken(),
+            "Token supply limit reached"
+        );
         require(account != address(0), "Invalid account address");
         getBuilderIdForToken(tokenId);
     }

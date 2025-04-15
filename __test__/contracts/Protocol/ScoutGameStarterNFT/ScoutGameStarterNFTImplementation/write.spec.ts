@@ -1158,45 +1158,421 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
 
   describe('setMinter()', function () {
     describe('effects', function () {
-      it('Should set the minter address correctly', async function () {
+      it('sets the minter address', async function () {
         const {
-          builderNftStarterPack: { builderNftContract }
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
         } = await loadContractWithStarterPackFixtures();
 
-        const { userAccount } = await generateWallets();
-        const newMinter = userAccount.account.address;
+        const newMinter = randomEthereumAddress();
 
-        await builderNftContract.write.setMinter([newMinter]);
+        await builderNftContract.write.setMinter([newMinter], {
+          account: builderNftAdminAccount.account
+        });
 
         const minter = await builderNftContract.read.getMinter();
-        expect(getAddress(minter)).toBe(getAddress(newMinter));
+        expect(getAddress(minter)).toEqual(getAddress(newMinter));
+      });
+    });
+
+    describe('events', function () {
+      it('emits MinterSet event', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        const previousMinter = await builderNftContract.read.getMinter();
+        const newMinter = randomEthereumAddress();
+
+        const txResponse = await builderNftContract.write.setMinter([newMinter], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await builderNftAdminAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['MinterSet']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'MinterSet');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousMinter.toLowerCase()).toEqual(previousMinter.toLowerCase());
+        expect(decodedEvent!.args.newMinter.toLowerCase()).toEqual(newMinter.toLowerCase());
       });
     });
 
     describe('permissions', function () {
-      it('Only admin can set the minter', async function () {
+      it('only admin can set the minter', async function () {
         const {
           builderNftStarterPack: { builderNftContract }
         } = await loadContractWithStarterPackFixtures();
 
         const { userAccount } = await generateWallets();
-        const newMinter = userAccount.account.address;
+        const newMinter = randomEthereumAddress();
 
-        await expect(builderNftContract.write.setMinter([newMinter], { account: userAccount.account })).rejects.toThrow(
-          'Caller is not the admin'
-        );
+        await expect(
+          builderNftContract.write.setMinter([newMinter], {
+            account: userAccount.account
+          })
+        ).rejects.toThrow('Caller is not the admin');
+      });
+    });
+  });
+
+  describe('updateBuilderTokenAddress()', function () {
+    describe('effects', function () {
+      it('updates the builder address for a token', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        // Register a builder token first
+        const builderId = uuid();
+        const tokenId = randomBigIntFromInterval();
+        const builderAddress = randomEthereumAddress();
+
+        await builderNftContract.write.registerBuilderToken([builderId, tokenId, builderAddress], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Update the builder address
+        const newBuilderAddress = randomEthereumAddress();
+
+        await builderNftContract.write.updateBuilderTokenAddress([tokenId, newBuilderAddress], {
+          account: builderNftAdminAccount.account
+        });
+
+        const updatedAddress = await builderNftContract.read.getBuilderAddressForToken([tokenId]);
+        expect(getAddress(updatedAddress)).toEqual(getAddress(newBuilderAddress));
       });
     });
 
-    describe('validations', function () {
-      it('Reverts when setting minter to zero address', async function () {
+    describe('events', function () {
+      it('emits BuilderAddressUpdated event', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        // Register a builder token first
+        const builderId = uuid();
+        const tokenId = randomBigIntFromInterval();
+        const builderAddress = randomEthereumAddress();
+
+        await builderNftContract.write.registerBuilderToken([builderId, tokenId, builderAddress], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Update the builder address
+        const newBuilderAddress = randomEthereumAddress();
+
+        const txResponse = await builderNftContract.write.updateBuilderTokenAddress([tokenId, newBuilderAddress], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await builderNftAdminAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['BuilderAddressUpdated']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'BuilderAddressUpdated');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.tokenId).toEqual(tokenId);
+        expect(decodedEvent!.args.previousAddress.toLowerCase()).toEqual(builderAddress.toLowerCase());
+        expect(decodedEvent!.args.newAddress.toLowerCase()).toEqual(newBuilderAddress.toLowerCase());
+      });
+    });
+
+    describe('permissions', function () {
+      it('admin can update the builder address', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        // Register a builder token first
+        const builderId = uuid();
+        const tokenId = randomBigIntFromInterval();
+        const builderAddress = randomEthereumAddress();
+
+        await builderNftContract.write.registerBuilderToken([builderId, tokenId, builderAddress], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Update as admin
+        const newBuilderAddress = randomEthereumAddress();
+        await expect(
+          builderNftContract.write.updateBuilderTokenAddress([tokenId, newBuilderAddress], {
+            account: builderNftAdminAccount.account
+          })
+        ).resolves.toBeDefined();
+      });
+
+      it('builder can update their own address', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        const { userAccount: builderAccount } = await generateWallets();
+
+        // Register a builder token with builderAccount as builder
+        const builderId = uuid();
+        const tokenId = randomBigIntFromInterval();
+
+        await builderNftContract.write.registerBuilderToken([builderId, tokenId, builderAccount.account.address], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Builder updates their own address
+        const newBuilderAddress = randomEthereumAddress();
+        await expect(
+          builderNftContract.write.updateBuilderTokenAddress([tokenId, newBuilderAddress], {
+            account: builderAccount.account
+          })
+        ).resolves.toBeDefined();
+      });
+
+      it('reverts if not admin or current builder', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        // Register a builder token
+        const builderId = uuid();
+        const tokenId = randomBigIntFromInterval();
+        const builderAddress = randomEthereumAddress();
+
+        await builderNftContract.write.registerBuilderToken([builderId, tokenId, builderAddress], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Try to update as non-admin, non-builder
+        const { userAccount } = await generateWallets();
+        const newBuilderAddress = randomEthereumAddress();
+
+        await expect(
+          builderNftContract.write.updateBuilderTokenAddress([tokenId, newBuilderAddress], {
+            account: userAccount.account
+          })
+        ).rejects.toThrow('Caller is not admin or builder');
+      });
+    });
+  });
+
+  describe('setProceedsReceiver()', function () {
+    describe('effects', function () {
+      it('sets the proceeds receiver address', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        const newReceiver = randomEthereumAddress();
+
+        await builderNftContract.write.setProceedsReceiver([newReceiver], {
+          account: builderNftAdminAccount.account
+        });
+
+        const receiver = await builderNftContract.read.getProceedsReceiver();
+        expect(getAddress(receiver)).toEqual(getAddress(newReceiver));
+      });
+    });
+
+    describe('events', function () {
+      it('emits ProceedsReceiverSet event', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        const previousReceiver = await builderNftContract.read.getProceedsReceiver();
+        const newReceiver = randomEthereumAddress();
+
+        const txResponse = await builderNftContract.write.setProceedsReceiver([newReceiver], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await builderNftAdminAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['ProceedsReceiverSet']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'ProceedsReceiverSet');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousReceiver.toLowerCase()).toEqual(previousReceiver.toLowerCase());
+        expect(decodedEvent!.args.newReceiver.toLowerCase()).toEqual(newReceiver.toLowerCase());
+      });
+    });
+
+    describe('permissions', function () {
+      it('only admin can set the proceeds receiver', async function () {
         const {
           builderNftStarterPack: { builderNftContract }
         } = await loadContractWithStarterPackFixtures();
 
-        const zeroAddress = '0x0000000000000000000000000000000000000000';
+        const { userAccount } = await generateWallets();
+        const newReceiver = randomEthereumAddress();
 
-        await expect(builderNftContract.write.setMinter([zeroAddress])).rejects.toThrow('Invalid address');
+        await expect(
+          builderNftContract.write.setProceedsReceiver([newReceiver], {
+            account: userAccount.account
+          })
+        ).rejects.toThrow('Caller is not the admin');
+      });
+    });
+  });
+
+  describe('updatePriceIncrement()', function () {
+    describe('effects', function () {
+      it('updates the price increment value', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        const newIncrement = BigInt(1000000);
+
+        await builderNftContract.write.updatePriceIncrement([newIncrement], {
+          account: builderNftAdminAccount.account
+        });
+
+        const increment = await builderNftContract.read.getPriceIncrement();
+        expect(increment).toEqual(newIncrement);
+      });
+    });
+
+    describe('events', function () {
+      it('emits PriceIncrementUpdated event', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        const previousIncrement = await builderNftContract.read.getPriceIncrement();
+        const newIncrement = BigInt(2000000);
+
+        const txResponse = await builderNftContract.write.updatePriceIncrement([newIncrement], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await builderNftAdminAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['PriceIncrementUpdated']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'PriceIncrementUpdated');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousIncrement).toEqual(previousIncrement);
+        expect(decodedEvent!.args.newIncrement).toEqual(newIncrement);
+      });
+    });
+
+    describe('permissions', function () {
+      it('only admin can update the price increment', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract }
+        } = await loadContractWithStarterPackFixtures();
+
+        const { userAccount } = await generateWallets();
+        const newIncrement = BigInt(1000000);
+
+        await expect(
+          builderNftContract.write.updatePriceIncrement([newIncrement], {
+            account: userAccount.account
+          })
+        ).rejects.toThrow('Caller is not the admin');
+      });
+    });
+  });
+
+  describe('updateERC20Contract()', function () {
+    describe('effects', function () {
+      it('updates the ERC20 contract address', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        const newERC20Address = randomEthereumAddress();
+
+        await builderNftContract.write.updateERC20Contract([newERC20Address], {
+          account: builderNftAdminAccount.account
+        });
+
+        const erc20Contract = await builderNftContract.read.getERC20Contract();
+        expect(getAddress(erc20Contract)).toEqual(getAddress(newERC20Address));
+      });
+    });
+
+    describe('events', function () {
+      it('emits ERC20ContractUpdated event', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        const previousERC20Contract = await builderNftContract.read.getERC20Contract();
+        const newERC20Address = randomEthereumAddress();
+
+        const txResponse = await builderNftContract.write.updateERC20Contract([newERC20Address], {
+          account: builderNftAdminAccount.account
+        });
+
+        // Extract logs and parse events
+        const receipt = await builderNftAdminAccount.getTransactionReceipt({ hash: txResponse });
+
+        const parsedLogs = parseEventLogs({
+          abi: builderNftContract.abi,
+          logs: receipt.logs,
+          eventName: ['ERC20ContractUpdated']
+        });
+
+        const decodedEvent = parsedLogs.find((log) => log.eventName === 'ERC20ContractUpdated');
+
+        expect(decodedEvent).toBeDefined();
+        expect(decodedEvent!.args.previousContract.toLowerCase()).toEqual(previousERC20Contract.toLowerCase());
+        expect(decodedEvent!.args.newContract.toLowerCase()).toEqual(newERC20Address.toLowerCase());
+      });
+    });
+
+    describe('permissions', function () {
+      it('only admin can update the ERC20 contract address', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract }
+        } = await loadContractWithStarterPackFixtures();
+
+        const { userAccount } = await generateWallets();
+        const newERC20Address = randomEthereumAddress();
+
+        await expect(
+          builderNftContract.write.updateERC20Contract([newERC20Address], {
+            account: userAccount.account
+          })
+        ).rejects.toThrow('Caller is not the admin');
+      });
+    });
+
+    describe('validations', function () {
+      it('reverts when setting to the zero address', async function () {
+        const {
+          builderNftStarterPack: { builderNftContract, builderNftAdminAccount }
+        } = await loadContractWithStarterPackFixtures();
+
+        await expect(
+          builderNftContract.write.updateERC20Contract(['0x0000000000000000000000000000000000000000'], {
+            account: builderNftAdminAccount.account
+          })
+        ).rejects.toThrow('Invalid address');
       });
     });
   });
