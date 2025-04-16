@@ -3,31 +3,35 @@ import path from 'path';
 
 import { TxBuilder } from '@morpho-labs/gnosis-tx-builder';
 import { erc20Abi, parseUnits, encodeFunctionData } from 'viem';
-import { baseSepolia } from 'viem/chains';
+import { base } from 'viem/chains';
 
 import { createAirdropContract } from '../../lib/airdrop/createAirdropContract';
 
+const airdropRecipients = JSON.parse(fs.readFileSync(path.join(__dirname, '../../airdrop_recipients.json'), 'utf8'));
+
+// process.exit(0);
 // Export the transaction to a JSON file
 
-const chain = baseSepolia;
-const safeAddress = '0x66525057AC951a0DB5C9fa7fAC6E056D6b8997E2' as const;
+const chain = base;
+// official safe: 0xC03a5f0352Ab5CC235B30976714AbfeA38772034
+// matt dev safe: 0x93cc4a36D510B9D65325A795EE41201f9232fa4D
+const safeAddress = '0x93cc4a36D510B9D65325A795EE41201f9232fa4D' as const;
 // official erc20: 0x047157cffb8841a64db93fd4e29fa3796b78466c
 // scout erc20: 0xfcdc6813a75df7eff31382cb956c1bee4788dd34
-const erc20Token = '0x0000000000000000000000000000000000000000' as const;
+const erc20Token = '0xfcdc6813a75df7eff31382cb956c1bee4788dd34' as const;
 const decimals = 18;
 
-const recipients = [
-  {
-    address: '0x66525057AC951a0DB5C9fa7fAC6E056D6b8997E2' as const,
-    amount: parseUnits('5', decimals).toString()
-  },
-  {
-    address: '0x0000000000000000000000000000000000000000' as const,
-    amount: parseUnits('.0001', decimals).toString()
-  }
-];
-
 async function main() {
+  const recipients = airdropRecipients.map((recipient: { address: string; amount: number }) => ({
+    address: recipient.address as `0x${string}`,
+    amount: parseUnits(recipient.amount.toString(), decimals).toString()
+  }));
+
+  if (recipients.length < 2) {
+    console.error('No recipients found');
+    process.exit(1);
+  }
+
   const { contractAddress, deployTxHash, totalAmount, merkleTree, blockNumber } = await createAirdropContract({
     chain,
     recipients,
