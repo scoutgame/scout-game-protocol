@@ -187,10 +187,25 @@ task('deployScoutProtocol', 'Deploys the Scout Protocol contract')
         deploymentName
       });
 
-      console.log(`Transferring Claims Manager role to ScoutGame Address: ${claimsManagerAddress}`);
+      // Create a contract instance for the proxy to interact with the implementation
+      const scoutProtocolContract = await hre.viem.getContractAt('ScoutProtocolImplementation', proxyAddress);
 
-      await deployedImplementation.write.setClaimsManager([claimsManagerAddress]);
+      console.log(`Setting Claims Manager to: ${claimsManagerAddress}`);
 
+      try {
+        // Call setClaimsManager through the proxy
+        const tx = await scoutProtocolContract.write.setClaimsManager([claimsManagerAddress], {
+          account: walletClient.account
+        });
+
+        console.log(`Claims Manager set successfully. Transaction hash: ${tx}`);
+
+        // Wait for transaction receipt to confirm
+        await client.waitForTransactionReceipt({ hash: tx });
+      } catch (error) {
+        console.error('Failed to set Claims Manager:', error);
+        throw error;
+      }
       console.log(`Transferring Admin role to Safe Address: ${adminAddress}`);
 
       await deployedProxy.write.transferAdmin([adminAddress]);
