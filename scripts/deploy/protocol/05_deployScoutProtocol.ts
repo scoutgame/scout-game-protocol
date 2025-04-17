@@ -187,13 +187,13 @@ task('deployScoutProtocol', 'Deploys the Scout Protocol contract')
         deploymentName
       });
 
-      console.log(`Transferring Admin role to Safe Address: ${adminAddress}`);
-
-      await deployedProxy.write.transferAdmin([adminAddress]);
-
       console.log(`Transferring Claims Manager role to ScoutGame Address: ${claimsManagerAddress}`);
 
       await deployedImplementation.write.setClaimsManager([claimsManagerAddress]);
+
+      console.log(`Transferring Admin role to Safe Address: ${adminAddress}`);
+
+      await deployedProxy.write.transferAdmin([adminAddress]);
     }
   });
 
