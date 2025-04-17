@@ -12,7 +12,8 @@ export async function createAirdropContract({
   adminPrivateKey,
   tokenAddress,
   expirationTimestamp,
-  nullAddressAmount
+  nullAddressAmount,
+  tokenHolderAddress
 }: {
   chain: Chain;
   recipients: Recipient[];
@@ -20,6 +21,7 @@ export async function createAirdropContract({
   tokenAddress: Address;
   expirationTimestamp: bigint;
   nullAddressAmount?: string;
+  tokenHolderAddress: Address;
 }) {
   const walletClient = getWalletClient({
     chain,
@@ -72,6 +74,7 @@ export async function createAirdropContract({
   const { proxyAddress, deployTxHash, blockNumber } = await deployAirdropContract({
     chain,
     adminPrivateKey,
+    tokenHolderAddress,
     tokenAddress,
     merkleRoot: rootHash as `0x${string}`,
     totalAirdropAmount,

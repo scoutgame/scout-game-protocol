@@ -22,7 +22,8 @@ export async function deployAirdropContract({
   proxyFactoryAddress = THIRDWEB_AIRDROP_PROXY_FACTORY_ADDRESS,
   implementationAddress = THIRDWEB_AIRDROP_IMPLEMENTATION_ADDRESS,
   chain,
-  adminPrivateKey
+  adminPrivateKey,
+  tokenHolderAddress
 }: {
   chain: Chain;
   proxyFactoryAddress?: Address;
@@ -34,6 +35,7 @@ export async function deployAirdropContract({
   expirationTimestamp: bigint;
   openClaimLimitPerWallet: bigint;
   adminPrivateKey: Address;
+  tokenHolderAddress: Address;
 }) {
   const walletClient = getWalletClient({
     chain,
@@ -49,7 +51,7 @@ export async function deployAirdropContract({
     functionName: 'initialize',
     args: [
       trustedForwarders,
-      walletClient.account.address,
+      tokenHolderAddress,
       tokenAddress,
       totalAirdropAmount,
       expirationTimestamp,
