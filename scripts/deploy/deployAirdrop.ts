@@ -16,10 +16,10 @@ const chain = base;
 // official safe: 0xC03a5f0352Ab5CC235B30976714AbfeA38772034
 // matt dev safe: 0x93cc4a36D510B9D65325A795EE41201f9232fa4D
 // matt/safwan safe: 0xc5F05D788BC3e5Bc4897FFc54D17d6B17f4E5700
-const safeAddress = '0xc5F05D788BC3e5Bc4897FFc54D17d6B17f4E5700' as const;
+const safeAddress = '0xC03a5f0352Ab5CC235B30976714AbfeA38772034' as const;
 // official erc20: 0x047157cffb8841a64db93fd4e29fa3796b78466c
 // scout erc20: 0xfcdc6813a75df7eff31382cb956c1bee4788dd34
-const erc20Token = '0xfcdc6813a75df7eff31382cb956c1bee4788dd34' as const;
+const erc20Token = '0x047157cffb8841a64db93fd4e29fa3796b78466c' as const;
 const decimals = 18;
 
 async function main() {
