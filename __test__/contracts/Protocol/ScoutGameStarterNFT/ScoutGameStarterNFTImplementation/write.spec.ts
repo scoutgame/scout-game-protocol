@@ -218,6 +218,7 @@ describe('ScoutProtocolStarterNFTImplementation', function () {
         } = await loadContractWithStarterPackFixtures();
 
         const { secondUserAccount } = await generateWallets();
+        const { secondUserAccount: builderWalletAccount } = await generateWallets();
 
         const testUserAddress = secondUserAccount.account.address;
         const builderWalletAddress = randomEthereumAddress();
