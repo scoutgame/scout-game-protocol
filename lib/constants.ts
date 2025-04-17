@@ -20,6 +20,16 @@ export function getScoutProtocolSafeAddress(): Address {
   return address as Address;
 }
 
+export function getClaimsManagerAddress(): Address {
+  const address = process.env.SCOUT_PROTOCOL_CLAIMS_MANAGER_ADDRESS;
+  if (!isAddress(address)) {
+    throw new Error(
+      'SCOUT_PROTOCOL_CLAIMS_MANAGER_ADDRESS is required to set as the claims manager of the ScoutProtocol contracts'
+    );
+  }
+  return address as Address;
+}
+
 // From foundry docs https://book.getfoundry.sh/tutorials/create2-tutorial#introduction
 // https://base-sepolia.blockscout.com/address/0x4e59b44847b379578588920cA78FbF26c0B4956C?tab=contract
 export const DETERMINISTIC_DEPLOYER_CONTRACT_DEPLOY_CODE =

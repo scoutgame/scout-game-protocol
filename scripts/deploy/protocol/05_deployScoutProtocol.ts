@@ -8,7 +8,7 @@ import { createPublicClient, createWalletClient, http, isAddress, parseAbiItem }
 import { privateKeyToAccount } from 'viem/accounts';
 
 import { getConnectorFromHardhatRuntimeEnvironment, getConnectorKey } from '../../../lib/connectors';
-import { getScoutProtocolSafeAddress } from '../../../lib/constants';
+import { getScoutProtocolSafeAddress, getClaimsManagerAddress } from '../../../lib/constants';
 import { outputContractAddress } from '../../../lib/outputContract';
 
 dotenv.config();
@@ -24,6 +24,7 @@ task('deployScoutProtocol', 'Deploys the Scout Protocol contract')
     const deploymentName = taskArgs.deployment;
 
     const adminAddress = getScoutProtocolSafeAddress();
+    const claimsManagerAddress = getClaimsManagerAddress();
 
     await hre.run('compile');
 
@@ -189,6 +190,10 @@ task('deployScoutProtocol', 'Deploys the Scout Protocol contract')
       console.log(`Transferring Admin role to Safe Address: ${adminAddress}`);
 
       await deployedProxy.write.transferAdmin([adminAddress]);
+
+      console.log(`Transferring Claims Manager role to ScoutGame Address: ${claimsManagerAddress}`);
+
+      await deployedImplementation.write.setClaimsManager([claimsManagerAddress]);
     }
   });
 
