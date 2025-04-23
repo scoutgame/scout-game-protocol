@@ -135,9 +135,9 @@ const config: Omit<HardhatUserConfig, 'networks'> & { networks: Record<Supported
       apiKey: {
         opsepolia: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ',
         optimism: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ',
-        basesepolia: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ',
+        basesepolia: process.env.BASESCAN_API_KEY || '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ',
         sepolia: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ',
-        base: '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ'
+        base: process.env.BASESCAN_API_KEY || '97FJRW1Q7XF1ATMCRUUN372HNK25WNT6JJ'
       },
       customChains: [
         {
