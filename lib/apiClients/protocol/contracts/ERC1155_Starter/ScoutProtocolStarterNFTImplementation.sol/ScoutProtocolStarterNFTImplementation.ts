@@ -28,7 +28,7 @@ type ReadWriteWalletClient<
   PublicActions<transport, chain, account> & WalletActions<chain, account>
 >;
 
-export class ScoutGamePreSeason02NFTImplementationClient {
+export class ScoutProtocolStarterNFTImplementationClient {
   private contractAddress: Address;
 
   private publicClient: PublicClient;
@@ -38,32 +38,6 @@ export class ScoutGamePreSeason02NFTImplementationClient {
   private chain: Chain;
 
   public abi: Abi = [
-    {
-      inputs: [],
-      name: 'ERC20Token',
-      outputs: [
-        {
-          internalType: 'address',
-          name: '',
-          type: 'address'
-        }
-      ],
-      stateMutability: 'view',
-      type: 'function'
-    },
-    {
-      inputs: [],
-      name: 'acceptUpgrade',
-      outputs: [
-        {
-          internalType: 'address',
-          name: '',
-          type: 'address'
-        }
-      ],
-      stateMutability: 'view',
-      type: 'function'
-    },
     {
       inputs: [],
       name: 'admin',
@@ -86,7 +60,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
         },
         {
           internalType: 'uint256',
-          name: 'tokenId',
+          name: 'id',
           type: 'uint256'
         }
       ],
@@ -110,7 +84,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
         },
         {
           internalType: 'uint256[]',
-          name: 'tokenIds',
+          name: 'ids',
           type: 'uint256[]'
         }
       ],
@@ -120,6 +94,30 @@ export class ScoutGamePreSeason02NFTImplementationClient {
           internalType: 'uint256[]',
           name: '',
           type: 'uint256[]'
+        }
+      ],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: 'scout',
+          type: 'string'
+        },
+        {
+          internalType: 'uint256',
+          name: 'tokenId',
+          type: 'uint256'
+        }
+      ],
+      name: 'balanceOfScout',
+      outputs: [
+        {
+          internalType: 'uint256',
+          name: '',
+          type: 'uint256'
         }
       ],
       stateMutability: 'view',
@@ -141,11 +139,35 @@ export class ScoutGamePreSeason02NFTImplementationClient {
           internalType: 'uint256',
           name: 'amount',
           type: 'uint256'
+        },
+        {
+          internalType: 'string',
+          name: 'scout',
+          type: 'string'
         }
       ],
       name: 'burn',
       outputs: [],
       stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
+          internalType: 'uint256',
+          name: 'tokenId',
+          type: 'uint256'
+        }
+      ],
+      name: 'getBuilderAddressForToken',
+      outputs: [
+        {
+          internalType: 'address',
+          name: '',
+          type: 'address'
+        }
+      ],
+      stateMutability: 'view',
       type: 'function'
     },
     {
@@ -169,12 +191,51 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     },
     {
       inputs: [],
+      name: 'getERC20Contract',
+      outputs: [
+        {
+          internalType: 'address',
+          name: '',
+          type: 'address'
+        }
+      ],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'getMinter',
+      outputs: [
+        {
+          internalType: 'address',
+          name: '',
+          type: 'address'
+        }
+      ],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
       name: 'getPriceIncrement',
       outputs: [
         {
           internalType: 'uint256',
           name: '',
           type: 'uint256'
+        }
+      ],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'getProceedsReceiver',
+      outputs: [
+        {
+          internalType: 'address',
+          name: '',
+          type: 'address'
         }
       ],
       stateMutability: 'view',
@@ -203,11 +264,6 @@ export class ScoutGamePreSeason02NFTImplementationClient {
       inputs: [
         {
           internalType: 'uint256',
-          name: 'tokenId',
-          type: 'uint256'
-        },
-        {
-          internalType: 'uint256',
           name: 'amount',
           type: 'uint256'
         }
@@ -224,24 +280,26 @@ export class ScoutGamePreSeason02NFTImplementationClient {
       type: 'function'
     },
     {
-      inputs: [
-        {
-          internalType: 'address',
-          name: 'account',
-          type: 'address'
-        },
-        {
-          internalType: 'address',
-          name: 'operator',
-          type: 'address'
-        }
-      ],
-      name: 'isApprovedForAll',
+      inputs: [],
+      name: 'getUriPrefix',
       outputs: [
         {
-          internalType: 'bool',
+          internalType: 'string',
           name: '',
-          type: 'bool'
+          type: 'string'
+        }
+      ],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'getUriSuffix',
+      outputs: [
+        {
+          internalType: 'string',
+          name: '',
+          type: 'string'
         }
       ],
       stateMutability: 'view',
@@ -263,6 +321,25 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     {
       inputs: [
         {
+          internalType: 'string',
+          name: 'uuid',
+          type: 'string'
+        }
+      ],
+      name: 'isValidUUID',
+      outputs: [
+        {
+          internalType: 'bool',
+          name: '',
+          type: 'bool'
+        }
+      ],
+      stateMutability: 'pure',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
           internalType: 'address',
           name: 'account',
           type: 'address'
@@ -276,6 +353,11 @@ export class ScoutGamePreSeason02NFTImplementationClient {
           internalType: 'uint256',
           name: 'amount',
           type: 'uint256'
+        },
+        {
+          internalType: 'string',
+          name: 'scout',
+          type: 'string'
         }
       ],
       name: 'mint',
@@ -299,24 +381,16 @@ export class ScoutGamePreSeason02NFTImplementationClient {
           internalType: 'uint256',
           name: 'amount',
           type: 'uint256'
+        },
+        {
+          internalType: 'string',
+          name: 'scout',
+          type: 'string'
         }
       ],
       name: 'mintTo',
       outputs: [],
       stateMutability: 'nonpayable',
-      type: 'function'
-    },
-    {
-      inputs: [],
-      name: 'minter',
-      outputs: [
-        {
-          internalType: 'address',
-          name: '',
-          type: 'address'
-        }
-      ],
-      stateMutability: 'view',
       type: 'function'
     },
     {
@@ -353,24 +427,21 @@ export class ScoutGamePreSeason02NFTImplementationClient {
       type: 'function'
     },
     {
-      inputs: [],
-      name: 'proceedsReceiver',
-      outputs: [
-        {
-          internalType: 'address',
-          name: '',
-          type: 'address'
-        }
-      ],
-      stateMutability: 'view',
-      type: 'function'
-    },
-    {
       inputs: [
         {
           internalType: 'string',
           name: 'builderId',
           type: 'string'
+        },
+        {
+          internalType: 'uint256',
+          name: 'builderTokenId',
+          type: 'uint256'
+        },
+        {
+          internalType: 'address',
+          name: 'builderWallet',
+          type: 'address'
         }
       ],
       name: 'registerBuilderToken',
@@ -381,97 +452,8 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     {
       inputs: [
         {
-          internalType: 'address',
-          name: 'from',
-          type: 'address'
-        },
-        {
-          internalType: 'address',
-          name: 'to',
-          type: 'address'
-        },
-        {
-          internalType: 'uint256[]',
-          name: 'tokenIds',
-          type: 'uint256[]'
-        },
-        {
-          internalType: 'uint256[]',
-          name: 'amounts',
-          type: 'uint256[]'
-        },
-        {
-          internalType: 'bytes',
-          name: 'data',
-          type: 'bytes'
-        }
-      ],
-      name: 'safeBatchTransferFrom',
-      outputs: [],
-      stateMutability: 'nonpayable',
-      type: 'function'
-    },
-    {
-      inputs: [
-        {
-          internalType: 'address',
-          name: 'from',
-          type: 'address'
-        },
-        {
-          internalType: 'address',
-          name: 'to',
-          type: 'address'
-        },
-        {
-          internalType: 'uint256',
-          name: 'tokenId',
-          type: 'uint256'
-        },
-        {
-          internalType: 'uint256',
-          name: 'amount',
-          type: 'uint256'
-        },
-        {
-          internalType: 'bytes',
-          name: 'data',
-          type: 'bytes'
-        }
-      ],
-      name: 'safeTransferFrom',
-      outputs: [],
-      stateMutability: 'nonpayable',
-      type: 'function'
-    },
-    {
-      inputs: [
-        {
-          internalType: 'address',
-          name: 'operator',
-          type: 'address'
-        },
-        {
-          internalType: 'bool',
-          name: 'approved',
-          type: 'bool'
-        }
-      ],
-      name: 'setApprovalForAll',
-      outputs: [],
-      stateMutability: 'nonpayable',
-      type: 'function'
-    },
-    {
-      inputs: [
-        {
           internalType: 'string',
-          name: '_prefix',
-          type: 'string'
-        },
-        {
-          internalType: 'string',
-          name: '_suffix',
+          name: 'newBaseUri',
           type: 'string'
         }
       ],
@@ -484,7 +466,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
       inputs: [
         {
           internalType: 'address',
-          name: '_minter',
+          name: 'minter',
           type: 'address'
         }
       ],
@@ -522,6 +504,50 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     {
       inputs: [
         {
+          internalType: 'string',
+          name: 'newPrefix',
+          type: 'string'
+        }
+      ],
+      name: 'setUriPrefix',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: 'newPrefix',
+          type: 'string'
+        },
+        {
+          internalType: 'string',
+          name: 'newSuffix',
+          type: 'string'
+        }
+      ],
+      name: 'setUriPrefixAndSuffix',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: 'newSuffix',
+          type: 'string'
+        }
+      ],
+      name: 'setUriSuffix',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
           internalType: 'bytes4',
           name: 'interfaceId',
           type: 'bytes4'
@@ -535,7 +561,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
           type: 'bool'
         }
       ],
-      stateMutability: 'pure',
+      stateMutability: 'view',
       type: 'function'
     },
     {
@@ -586,6 +612,25 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     {
       inputs: [
         {
+          internalType: 'string',
+          name: 'scout',
+          type: 'string'
+        }
+      ],
+      name: 'totalMinted',
+      outputs: [
+        {
+          internalType: 'uint256',
+          name: '',
+          type: 'uint256'
+        }
+      ],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
           internalType: 'uint256',
           name: 'tokenId',
           type: 'uint256'
@@ -618,6 +663,37 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     {
       inputs: [],
       name: 'unPause',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
+          internalType: 'uint256',
+          name: 'tokenId',
+          type: 'uint256'
+        },
+        {
+          internalType: 'address',
+          name: 'newAddress',
+          type: 'address'
+        }
+      ],
+      name: 'updateBuilderTokenAddress',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
+          internalType: 'address',
+          name: 'newContract',
+          type: 'address'
+        }
+      ],
+      name: 'updateERC20Contract',
       outputs: [],
       stateMutability: 'nonpayable',
       type: 'function'
@@ -683,6 +759,94 @@ export class ScoutGamePreSeason02NFTImplementationClient {
       anonymous: false,
       inputs: [
         {
+          indexed: true,
+          internalType: 'uint256',
+          name: 'tokenId',
+          type: 'uint256'
+        },
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'previousAddress',
+          type: 'address'
+        },
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'newAddress',
+          type: 'address'
+        }
+      ],
+      name: 'BuilderAddressUpdated',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: 'uint256',
+          name: 'tokenId',
+          type: 'uint256'
+        },
+        {
+          indexed: false,
+          internalType: 'uint256',
+          name: 'amount',
+          type: 'uint256'
+        },
+        {
+          indexed: false,
+          internalType: 'string',
+          name: 'scout',
+          type: 'string'
+        }
+      ],
+      name: 'BuilderScouted',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'previousContract',
+          type: 'address'
+        },
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'newContract',
+          type: 'address'
+        }
+      ],
+      name: 'ERC20ContractUpdated',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'previousMinter',
+          type: 'address'
+        },
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'newMinter',
+          type: 'address'
+        }
+      ],
+      name: 'MinterSet',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
           indexed: false,
           internalType: 'address',
           name: '_callerAddress',
@@ -690,6 +854,44 @@ export class ScoutGamePreSeason02NFTImplementationClient {
         }
       ],
       name: 'Paused',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: 'uint256',
+          name: 'previousIncrement',
+          type: 'uint256'
+        },
+        {
+          indexed: false,
+          internalType: 'uint256',
+          name: 'newIncrement',
+          type: 'uint256'
+        }
+      ],
+      name: 'PriceIncrementUpdated',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'previousReceiver',
+          type: 'address'
+        },
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'newReceiver',
+          type: 'address'
+        }
+      ],
+      name: 'ProceedsReceiverSet',
       type: 'event'
     },
     {
@@ -878,54 +1080,6 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     }
   }
 
-  async ERC20Token(params: { blockNumber?: bigint } = {}): Promise<Address> {
-    const txData = encodeFunctionData({
-      abi: this.abi,
-      functionName: 'ERC20Token',
-      args: []
-    });
-
-    const { data } = await this.publicClient.call({
-      to: this.contractAddress,
-      data: txData,
-      blockNumber: params.blockNumber
-    });
-
-    // Decode the result based on the expected return type
-    const result = decodeFunctionResult({
-      abi: this.abi,
-      functionName: 'ERC20Token',
-      data: data as `0x${string}`
-    });
-
-    // Parse the result based on the return type
-    return result as Address;
-  }
-
-  async acceptUpgrade(params: { blockNumber?: bigint } = {}): Promise<Address> {
-    const txData = encodeFunctionData({
-      abi: this.abi,
-      functionName: 'acceptUpgrade',
-      args: []
-    });
-
-    const { data } = await this.publicClient.call({
-      to: this.contractAddress,
-      data: txData,
-      blockNumber: params.blockNumber
-    });
-
-    // Decode the result based on the expected return type
-    const result = decodeFunctionResult({
-      abi: this.abi,
-      functionName: 'acceptUpgrade',
-      data: data as `0x${string}`
-    });
-
-    // Parse the result based on the return type
-    return result as Address;
-  }
-
   async admin(params: { blockNumber?: bigint } = {}): Promise<Address> {
     const txData = encodeFunctionData({
       abi: this.abi,
@@ -950,11 +1104,11 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     return result as Address;
   }
 
-  async balanceOf(params: { args: { account: Address; tokenId: bigint }; blockNumber?: bigint }): Promise<bigint> {
+  async balanceOf(params: { args: { account: Address; id: bigint }; blockNumber?: bigint }): Promise<bigint> {
     const txData = encodeFunctionData({
       abi: this.abi,
       functionName: 'balanceOf',
-      args: [params.args.account, params.args.tokenId]
+      args: [params.args.account, params.args.id]
     });
 
     const { data } = await this.publicClient.call({
@@ -975,13 +1129,13 @@ export class ScoutGamePreSeason02NFTImplementationClient {
   }
 
   async balanceOfBatch(params: {
-    args: { accounts: Address[]; tokenIds: bigint[] };
+    args: { accounts: Address[]; ids: bigint[] };
     blockNumber?: bigint;
   }): Promise<bigint[]> {
     const txData = encodeFunctionData({
       abi: this.abi,
       functionName: 'balanceOfBatch',
-      args: [params.args.accounts, params.args.tokenIds]
+      args: [params.args.accounts, params.args.ids]
     });
 
     const { data } = await this.publicClient.call({
@@ -1001,8 +1155,32 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     return result as bigint[];
   }
 
+  async balanceOfScout(params: { args: { scout: string; tokenId: bigint }; blockNumber?: bigint }): Promise<bigint> {
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'balanceOfScout',
+      args: [params.args.scout, params.args.tokenId]
+    });
+
+    const { data } = await this.publicClient.call({
+      to: this.contractAddress,
+      data: txData,
+      blockNumber: params.blockNumber
+    });
+
+    // Decode the result based on the expected return type
+    const result = decodeFunctionResult({
+      abi: this.abi,
+      functionName: 'balanceOfScout',
+      data: data as `0x${string}`
+    });
+
+    // Parse the result based on the return type
+    return result as bigint;
+  }
+
   async burn(params: {
-    args: { account: Address; tokenId: bigint; amount: bigint };
+    args: { account: Address; tokenId: bigint; amount: bigint; scout: string };
     value?: bigint;
     gasPrice?: bigint;
   }): Promise<TransactionReceipt> {
@@ -1013,7 +1191,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     const txData = encodeFunctionData({
       abi: this.abi,
       functionName: 'burn',
-      args: [params.args.account, params.args.tokenId, params.args.amount]
+      args: [params.args.account, params.args.tokenId, params.args.amount, params.args.scout]
     });
 
     const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
@@ -1028,6 +1206,30 @@ export class ScoutGamePreSeason02NFTImplementationClient {
 
     // Return the transaction receipt
     return this.walletClient.waitForTransactionReceipt({ hash: tx });
+  }
+
+  async getBuilderAddressForToken(params: { args: { tokenId: bigint }; blockNumber?: bigint }): Promise<Address> {
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'getBuilderAddressForToken',
+      args: [params.args.tokenId]
+    });
+
+    const { data } = await this.publicClient.call({
+      to: this.contractAddress,
+      data: txData,
+      blockNumber: params.blockNumber
+    });
+
+    // Decode the result based on the expected return type
+    const result = decodeFunctionResult({
+      abi: this.abi,
+      functionName: 'getBuilderAddressForToken',
+      data: data as `0x${string}`
+    });
+
+    // Parse the result based on the return type
+    return result as Address;
   }
 
   async getBuilderIdForToken(params: { args: { tokenId: bigint }; blockNumber?: bigint }): Promise<string> {
@@ -1054,6 +1256,54 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     return result as string;
   }
 
+  async getERC20Contract(params: { blockNumber?: bigint } = {}): Promise<Address> {
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'getERC20Contract',
+      args: []
+    });
+
+    const { data } = await this.publicClient.call({
+      to: this.contractAddress,
+      data: txData,
+      blockNumber: params.blockNumber
+    });
+
+    // Decode the result based on the expected return type
+    const result = decodeFunctionResult({
+      abi: this.abi,
+      functionName: 'getERC20Contract',
+      data: data as `0x${string}`
+    });
+
+    // Parse the result based on the return type
+    return result as Address;
+  }
+
+  async getMinter(params: { blockNumber?: bigint } = {}): Promise<Address> {
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'getMinter',
+      args: []
+    });
+
+    const { data } = await this.publicClient.call({
+      to: this.contractAddress,
+      data: txData,
+      blockNumber: params.blockNumber
+    });
+
+    // Decode the result based on the expected return type
+    const result = decodeFunctionResult({
+      abi: this.abi,
+      functionName: 'getMinter',
+      data: data as `0x${string}`
+    });
+
+    // Parse the result based on the return type
+    return result as Address;
+  }
+
   async getPriceIncrement(params: { blockNumber?: bigint } = {}): Promise<bigint> {
     const txData = encodeFunctionData({
       abi: this.abi,
@@ -1076,6 +1326,30 @@ export class ScoutGamePreSeason02NFTImplementationClient {
 
     // Parse the result based on the return type
     return result as bigint;
+  }
+
+  async getProceedsReceiver(params: { blockNumber?: bigint } = {}): Promise<Address> {
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'getProceedsReceiver',
+      args: []
+    });
+
+    const { data } = await this.publicClient.call({
+      to: this.contractAddress,
+      data: txData,
+      blockNumber: params.blockNumber
+    });
+
+    // Decode the result based on the expected return type
+    const result = decodeFunctionResult({
+      abi: this.abi,
+      functionName: 'getProceedsReceiver',
+      data: data as `0x${string}`
+    });
+
+    // Parse the result based on the return type
+    return result as Address;
   }
 
   async getTokenIdForBuilder(params: { args: { builderId: string }; blockNumber?: bigint }): Promise<bigint> {
@@ -1102,14 +1376,11 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     return result as bigint;
   }
 
-  async getTokenPurchasePrice(params: {
-    args: { tokenId: bigint; amount: bigint };
-    blockNumber?: bigint;
-  }): Promise<bigint> {
+  async getTokenPurchasePrice(params: { args: { amount: bigint }; blockNumber?: bigint }): Promise<bigint> {
     const txData = encodeFunctionData({
       abi: this.abi,
       functionName: 'getTokenPurchasePrice',
-      args: [params.args.tokenId, params.args.amount]
+      args: [params.args.amount]
     });
 
     const { data } = await this.publicClient.call({
@@ -1129,14 +1400,11 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     return result as bigint;
   }
 
-  async isApprovedForAll(params: {
-    args: { account: Address; operator: Address };
-    blockNumber?: bigint;
-  }): Promise<boolean> {
+  async getUriPrefix(params: { blockNumber?: bigint } = {}): Promise<string> {
     const txData = encodeFunctionData({
       abi: this.abi,
-      functionName: 'isApprovedForAll',
-      args: [params.args.account, params.args.operator]
+      functionName: 'getUriPrefix',
+      args: []
     });
 
     const { data } = await this.publicClient.call({
@@ -1148,12 +1416,36 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     // Decode the result based on the expected return type
     const result = decodeFunctionResult({
       abi: this.abi,
-      functionName: 'isApprovedForAll',
+      functionName: 'getUriPrefix',
       data: data as `0x${string}`
     });
 
     // Parse the result based on the return type
-    return result as boolean;
+    return result as string;
+  }
+
+  async getUriSuffix(params: { blockNumber?: bigint } = {}): Promise<string> {
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'getUriSuffix',
+      args: []
+    });
+
+    const { data } = await this.publicClient.call({
+      to: this.contractAddress,
+      data: txData,
+      blockNumber: params.blockNumber
+    });
+
+    // Decode the result based on the expected return type
+    const result = decodeFunctionResult({
+      abi: this.abi,
+      functionName: 'getUriSuffix',
+      data: data as `0x${string}`
+    });
+
+    // Parse the result based on the return type
+    return result as string;
   }
 
   async isPaused(params: { blockNumber?: bigint } = {}): Promise<boolean> {
@@ -1180,8 +1472,32 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     return result as boolean;
   }
 
+  async isValidUUID(params: { args: { uuid: string }; blockNumber?: bigint }): Promise<boolean> {
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'isValidUUID',
+      args: [params.args.uuid]
+    });
+
+    const { data } = await this.publicClient.call({
+      to: this.contractAddress,
+      data: txData,
+      blockNumber: params.blockNumber
+    });
+
+    // Decode the result based on the expected return type
+    const result = decodeFunctionResult({
+      abi: this.abi,
+      functionName: 'isValidUUID',
+      data: data as `0x${string}`
+    });
+
+    // Parse the result based on the return type
+    return result as boolean;
+  }
+
   async mint(params: {
-    args: { account: Address; tokenId: bigint; amount: bigint };
+    args: { account: Address; tokenId: bigint; amount: bigint; scout: string };
     value?: bigint;
     gasPrice?: bigint;
   }): Promise<TransactionReceipt> {
@@ -1192,7 +1508,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     const txData = encodeFunctionData({
       abi: this.abi,
       functionName: 'mint',
-      args: [params.args.account, params.args.tokenId, params.args.amount]
+      args: [params.args.account, params.args.tokenId, params.args.amount, params.args.scout]
     });
 
     const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
@@ -1210,7 +1526,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
   }
 
   async mintTo(params: {
-    args: { account: Address; tokenId: bigint; amount: bigint };
+    args: { account: Address; tokenId: bigint; amount: bigint; scout: string };
     value?: bigint;
     gasPrice?: bigint;
   }): Promise<TransactionReceipt> {
@@ -1221,7 +1537,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     const txData = encodeFunctionData({
       abi: this.abi,
       functionName: 'mintTo',
-      args: [params.args.account, params.args.tokenId, params.args.amount]
+      args: [params.args.account, params.args.tokenId, params.args.amount, params.args.scout]
     });
 
     const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
@@ -1236,30 +1552,6 @@ export class ScoutGamePreSeason02NFTImplementationClient {
 
     // Return the transaction receipt
     return this.walletClient.waitForTransactionReceipt({ hash: tx });
-  }
-
-  async minter(params: { blockNumber?: bigint } = {}): Promise<Address> {
-    const txData = encodeFunctionData({
-      abi: this.abi,
-      functionName: 'minter',
-      args: []
-    });
-
-    const { data } = await this.publicClient.call({
-      to: this.contractAddress,
-      data: txData,
-      blockNumber: params.blockNumber
-    });
-
-    // Decode the result based on the expected return type
-    const result = decodeFunctionResult({
-      abi: this.abi,
-      functionName: 'minter',
-      data: data as `0x${string}`
-    });
-
-    // Parse the result based on the return type
-    return result as Address;
   }
 
   async name(params: { blockNumber?: bigint } = {}): Promise<string> {
@@ -1335,32 +1627,8 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     return result as Address;
   }
 
-  async proceedsReceiver(params: { blockNumber?: bigint } = {}): Promise<Address> {
-    const txData = encodeFunctionData({
-      abi: this.abi,
-      functionName: 'proceedsReceiver',
-      args: []
-    });
-
-    const { data } = await this.publicClient.call({
-      to: this.contractAddress,
-      data: txData,
-      blockNumber: params.blockNumber
-    });
-
-    // Decode the result based on the expected return type
-    const result = decodeFunctionResult({
-      abi: this.abi,
-      functionName: 'proceedsReceiver',
-      data: data as `0x${string}`
-    });
-
-    // Parse the result based on the return type
-    return result as Address;
-  }
-
   async registerBuilderToken(params: {
-    args: { builderId: string };
+    args: { builderId: string; builderTokenId: bigint; builderWallet: Address };
     value?: bigint;
     gasPrice?: bigint;
   }): Promise<TransactionReceipt> {
@@ -1371,94 +1639,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     const txData = encodeFunctionData({
       abi: this.abi,
       functionName: 'registerBuilderToken',
-      args: [params.args.builderId]
-    });
-
-    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
-      to: getAddress(this.contractAddress),
-      data: txData,
-      value: params.value ?? BigInt(0), // Optional value for payable methods
-      gasPrice: params.gasPrice // Optional gasPrice
-    };
-
-    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
-    const tx = await this.walletClient.sendTransaction(txInput as any);
-
-    // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
-  }
-
-  async safeBatchTransferFrom(params: {
-    args: { from: Address; to: Address; tokenIds: bigint[]; amounts: bigint[]; data: string };
-    value?: bigint;
-    gasPrice?: bigint;
-  }): Promise<TransactionReceipt> {
-    if (!this.walletClient) {
-      throw new Error('Wallet client is required for write operations.');
-    }
-
-    const txData = encodeFunctionData({
-      abi: this.abi,
-      functionName: 'safeBatchTransferFrom',
-      args: [params.args.from, params.args.to, params.args.tokenIds, params.args.amounts, params.args.data]
-    });
-
-    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
-      to: getAddress(this.contractAddress),
-      data: txData,
-      value: params.value ?? BigInt(0), // Optional value for payable methods
-      gasPrice: params.gasPrice // Optional gasPrice
-    };
-
-    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
-    const tx = await this.walletClient.sendTransaction(txInput as any);
-
-    // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
-  }
-
-  async safeTransferFrom(params: {
-    args: { from: Address; to: Address; tokenId: bigint; amount: bigint; data: string };
-    value?: bigint;
-    gasPrice?: bigint;
-  }): Promise<TransactionReceipt> {
-    if (!this.walletClient) {
-      throw new Error('Wallet client is required for write operations.');
-    }
-
-    const txData = encodeFunctionData({
-      abi: this.abi,
-      functionName: 'safeTransferFrom',
-      args: [params.args.from, params.args.to, params.args.tokenId, params.args.amount, params.args.data]
-    });
-
-    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
-      to: getAddress(this.contractAddress),
-      data: txData,
-      value: params.value ?? BigInt(0), // Optional value for payable methods
-      gasPrice: params.gasPrice // Optional gasPrice
-    };
-
-    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
-    const tx = await this.walletClient.sendTransaction(txInput as any);
-
-    // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
-  }
-
-  async setApprovalForAll(params: {
-    args: { operator: Address; approved: boolean };
-    value?: bigint;
-    gasPrice?: bigint;
-  }): Promise<TransactionReceipt> {
-    if (!this.walletClient) {
-      throw new Error('Wallet client is required for write operations.');
-    }
-
-    const txData = encodeFunctionData({
-      abi: this.abi,
-      functionName: 'setApprovalForAll',
-      args: [params.args.operator, params.args.approved]
+      args: [params.args.builderId, params.args.builderTokenId, params.args.builderWallet]
     });
 
     const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
@@ -1476,7 +1657,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
   }
 
   async setBaseUri(params: {
-    args: { _prefix: string; _suffix: string };
+    args: { newBaseUri: string };
     value?: bigint;
     gasPrice?: bigint;
   }): Promise<TransactionReceipt> {
@@ -1487,7 +1668,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     const txData = encodeFunctionData({
       abi: this.abi,
       functionName: 'setBaseUri',
-      args: [params.args._prefix, params.args._suffix]
+      args: [params.args.newBaseUri]
     });
 
     const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
@@ -1505,7 +1686,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
   }
 
   async setMinter(params: {
-    args: { _minter: Address };
+    args: { minter: Address };
     value?: bigint;
     gasPrice?: bigint;
   }): Promise<TransactionReceipt> {
@@ -1516,7 +1697,7 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     const txData = encodeFunctionData({
       abi: this.abi,
       functionName: 'setMinter',
-      args: [params.args._minter]
+      args: [params.args.minter]
     });
 
     const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
@@ -1575,6 +1756,93 @@ export class ScoutGamePreSeason02NFTImplementationClient {
       abi: this.abi,
       functionName: 'setProceedsReceiver',
       args: [params.args.receiver]
+    });
+
+    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
+      to: getAddress(this.contractAddress),
+      data: txData,
+      value: params.value ?? BigInt(0), // Optional value for payable methods
+      gasPrice: params.gasPrice // Optional gasPrice
+    };
+
+    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
+    const tx = await this.walletClient.sendTransaction(txInput as any);
+
+    // Return the transaction receipt
+    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+  }
+
+  async setUriPrefix(params: {
+    args: { newPrefix: string };
+    value?: bigint;
+    gasPrice?: bigint;
+  }): Promise<TransactionReceipt> {
+    if (!this.walletClient) {
+      throw new Error('Wallet client is required for write operations.');
+    }
+
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'setUriPrefix',
+      args: [params.args.newPrefix]
+    });
+
+    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
+      to: getAddress(this.contractAddress),
+      data: txData,
+      value: params.value ?? BigInt(0), // Optional value for payable methods
+      gasPrice: params.gasPrice // Optional gasPrice
+    };
+
+    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
+    const tx = await this.walletClient.sendTransaction(txInput as any);
+
+    // Return the transaction receipt
+    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+  }
+
+  async setUriPrefixAndSuffix(params: {
+    args: { newPrefix: string; newSuffix: string };
+    value?: bigint;
+    gasPrice?: bigint;
+  }): Promise<TransactionReceipt> {
+    if (!this.walletClient) {
+      throw new Error('Wallet client is required for write operations.');
+    }
+
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'setUriPrefixAndSuffix',
+      args: [params.args.newPrefix, params.args.newSuffix]
+    });
+
+    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
+      to: getAddress(this.contractAddress),
+      data: txData,
+      value: params.value ?? BigInt(0), // Optional value for payable methods
+      gasPrice: params.gasPrice // Optional gasPrice
+    };
+
+    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
+    const tx = await this.walletClient.sendTransaction(txInput as any);
+
+    // Return the transaction receipt
+    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+  }
+
+  async setUriSuffix(params: {
+    args: { newSuffix: string };
+    value?: bigint;
+    gasPrice?: bigint;
+  }): Promise<TransactionReceipt> {
+    if (!this.walletClient) {
+      throw new Error('Wallet client is required for write operations.');
+    }
+
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'setUriSuffix',
+      args: [params.args.newSuffix]
     });
 
     const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
@@ -1687,6 +1955,30 @@ export class ScoutGamePreSeason02NFTImplementationClient {
     return result as bigint;
   }
 
+  async totalMinted(params: { args: { scout: string }; blockNumber?: bigint }): Promise<bigint> {
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'totalMinted',
+      args: [params.args.scout]
+    });
+
+    const { data } = await this.publicClient.call({
+      to: this.contractAddress,
+      data: txData,
+      blockNumber: params.blockNumber
+    });
+
+    // Decode the result based on the expected return type
+    const result = decodeFunctionResult({
+      abi: this.abi,
+      functionName: 'totalMinted',
+      data: data as `0x${string}`
+    });
+
+    // Parse the result based on the return type
+    return result as bigint;
+  }
+
   async totalSupply(params: { args: { tokenId: bigint }; blockNumber?: bigint }): Promise<bigint> {
     const txData = encodeFunctionData({
       abi: this.abi,
@@ -1749,6 +2041,64 @@ export class ScoutGamePreSeason02NFTImplementationClient {
       abi: this.abi,
       functionName: 'unPause',
       args: []
+    });
+
+    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
+      to: getAddress(this.contractAddress),
+      data: txData,
+      value: params.value ?? BigInt(0), // Optional value for payable methods
+      gasPrice: params.gasPrice // Optional gasPrice
+    };
+
+    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
+    const tx = await this.walletClient.sendTransaction(txInput as any);
+
+    // Return the transaction receipt
+    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+  }
+
+  async updateBuilderTokenAddress(params: {
+    args: { tokenId: bigint; newAddress: Address };
+    value?: bigint;
+    gasPrice?: bigint;
+  }): Promise<TransactionReceipt> {
+    if (!this.walletClient) {
+      throw new Error('Wallet client is required for write operations.');
+    }
+
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'updateBuilderTokenAddress',
+      args: [params.args.tokenId, params.args.newAddress]
+    });
+
+    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
+      to: getAddress(this.contractAddress),
+      data: txData,
+      value: params.value ?? BigInt(0), // Optional value for payable methods
+      gasPrice: params.gasPrice // Optional gasPrice
+    };
+
+    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
+    const tx = await this.walletClient.sendTransaction(txInput as any);
+
+    // Return the transaction receipt
+    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+  }
+
+  async updateERC20Contract(params: {
+    args: { newContract: Address };
+    value?: bigint;
+    gasPrice?: bigint;
+  }): Promise<TransactionReceipt> {
+    if (!this.walletClient) {
+      throw new Error('Wallet client is required for write operations.');
+    }
+
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'updateERC20Contract',
+      args: [params.args.newContract]
     });
 
     const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
