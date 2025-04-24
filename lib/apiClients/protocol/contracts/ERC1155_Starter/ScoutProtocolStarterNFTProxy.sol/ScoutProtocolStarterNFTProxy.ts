@@ -29,7 +29,7 @@ type ReadWriteWalletClient<
   PublicActions<transport, chain, account> & WalletActions<chain, account>
 >;
 
-export class ScoutTokenERC20ProxyClient {
+export class ScoutProtocolStarterNFTProxyClient {
   public contractAddress: Address;
 
   private publicClient: PublicClient;

@@ -65,7 +65,6 @@ task('interactProtocolEASResolver', 'Interact with ScoutGame Protocol EAS Resolv
     }
 
     const ScoutScoutTokenERC20Client = new _ScoutProtocolEASResolverClient({
-      chain: connector.chain,
       contractAddress,
       walletClient: getWalletClient({ chain: connector.chain, privateKey, rpcUrl: connector.rpcUrl })
     });

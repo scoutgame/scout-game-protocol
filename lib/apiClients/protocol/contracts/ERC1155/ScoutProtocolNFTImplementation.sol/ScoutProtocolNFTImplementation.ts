@@ -1,3 +1,4 @@
+import { waitForTransactionReceipt } from '@packages/blockchain/waitForTransactionReceipt';
 import type {
   Abi,
   Account,
@@ -29,13 +30,11 @@ type ReadWriteWalletClient<
 >;
 
 export class ScoutProtocolNFTImplementationClient {
-  private contractAddress: Address;
+  public contractAddress: Address;
 
   private publicClient: PublicClient;
 
   private walletClient?: ReadWriteWalletClient;
-
-  private chain: Chain;
 
   public abi: Abi = [
     {
@@ -280,6 +279,19 @@ export class ScoutProtocolNFTImplementationClient {
       type: 'function'
     },
     {
+      inputs: [],
+      name: 'maxSupplyPerToken',
+      outputs: [
+        {
+          internalType: 'uint256',
+          name: '',
+          type: 'uint256'
+        }
+      ],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
       inputs: [
         {
           internalType: 'address',
@@ -298,6 +310,29 @@ export class ScoutProtocolNFTImplementationClient {
         }
       ],
       name: 'mint',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
+          internalType: 'address',
+          name: 'account',
+          type: 'address'
+        },
+        {
+          internalType: 'uint256',
+          name: 'tokenId',
+          type: 'uint256'
+        },
+        {
+          internalType: 'uint256',
+          name: 'amount',
+          type: 'uint256'
+        }
+      ],
+      name: 'mintTo',
       outputs: [],
       stateMutability: 'nonpayable',
       type: 'function'
@@ -477,6 +512,19 @@ export class ScoutProtocolNFTImplementationClient {
         }
       ],
       name: 'setBaseUri',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [
+        {
+          internalType: 'uint256',
+          name: 'newMaxSupply',
+          type: 'uint256'
+        }
+      ],
+      name: 'setMaxSupplyPerToken',
       outputs: [],
       stateMutability: 'nonpayable',
       type: 'function'
@@ -702,19 +750,63 @@ export class ScoutProtocolNFTImplementationClient {
       anonymous: false,
       inputs: [
         {
-          indexed: false,
+          indexed: true,
           internalType: 'uint256',
           name: 'tokenId',
           type: 'uint256'
         },
         {
-          indexed: false,
-          internalType: 'string',
-          name: 'builderId',
-          type: 'string'
+          indexed: true,
+          internalType: 'address',
+          name: 'previousAddress',
+          type: 'address'
+        },
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'newAddress',
+          type: 'address'
         }
       ],
-      name: 'TokenRegistered',
+      name: 'BuilderAddressUpdated',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: 'uint256',
+          name: 'previousMaxSupply',
+          type: 'uint256'
+        },
+        {
+          indexed: false,
+          internalType: 'uint256',
+          name: 'newMaxSupply',
+          type: 'uint256'
+        }
+      ],
+      name: 'MaxSupplyPerTokenSet',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'previousMinter',
+          type: 'address'
+        },
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'newMinter',
+          type: 'address'
+        }
+      ],
+      name: 'MinterSet',
       type: 'event'
     },
     {
@@ -728,6 +820,44 @@ export class ScoutProtocolNFTImplementationClient {
         }
       ],
       name: 'Paused',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: 'uint256',
+          name: 'previousIncrement',
+          type: 'uint256'
+        },
+        {
+          indexed: false,
+          internalType: 'uint256',
+          name: 'newIncrement',
+          type: 'uint256'
+        }
+      ],
+      name: 'PriceIncrementUpdated',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'previousReceiver',
+          type: 'address'
+        },
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'newReceiver',
+          type: 'address'
+        }
+      ],
+      name: 'ProceedsReceiverSet',
       type: 'event'
     },
     {
@@ -753,6 +883,25 @@ export class ScoutProtocolNFTImplementationClient {
         }
       ],
       name: 'RoleTransferred',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: 'uint256',
+          name: 'tokenId',
+          type: 'uint256'
+        },
+        {
+          indexed: false,
+          internalType: 'string',
+          name: 'builderId',
+          type: 'string'
+        }
+      ],
+      name: 'TokenRegistered',
       type: 'event'
     },
     {
@@ -866,28 +1015,19 @@ export class ScoutProtocolNFTImplementationClient {
   constructor({
     contractAddress,
     publicClient,
-    walletClient,
-    chain
+    walletClient
   }: {
     contractAddress: Address;
-    chain: Chain;
     publicClient?: PublicClient;
     walletClient?: ReadWriteWalletClient;
   }) {
     if (!publicClient && !walletClient) {
       throw new Error('At least one client is required.');
-    } else if (publicClient && walletClient) {
-      throw new Error('Provide only a public client or wallet clients');
     }
 
-    this.chain = chain;
     this.contractAddress = contractAddress;
 
     const client = publicClient || walletClient;
-
-    if (client!.chain!.id !== chain.id) {
-      throw new Error('Client must be on the same chain as the contract. Make sure to add a chain to your client');
-    }
 
     if (publicClient) {
       this.publicClient = publicClient;
@@ -1046,7 +1186,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async getBuilderAddressForToken(params: { args: { tokenId: bigint }; blockNumber?: bigint }): Promise<Address> {
@@ -1223,6 +1363,30 @@ export class ScoutProtocolNFTImplementationClient {
     return result as boolean;
   }
 
+  async maxSupplyPerToken(params: { blockNumber?: bigint } = {}): Promise<bigint> {
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'maxSupplyPerToken',
+      args: []
+    });
+
+    const { data } = await this.publicClient.call({
+      to: this.contractAddress,
+      data: txData,
+      blockNumber: params.blockNumber
+    });
+
+    // Decode the result based on the expected return type
+    const result = decodeFunctionResult({
+      abi: this.abi,
+      functionName: 'maxSupplyPerToken',
+      data: data as `0x${string}`
+    });
+
+    // Parse the result based on the return type
+    return result as bigint;
+  }
+
   async mint(params: {
     args: { account: Address; tokenId: bigint; amount: bigint };
     value?: bigint;
@@ -1249,7 +1413,36 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
+  }
+
+  async mintTo(params: {
+    args: { account: Address; tokenId: bigint; amount: bigint };
+    value?: bigint;
+    gasPrice?: bigint;
+  }): Promise<TransactionReceipt> {
+    if (!this.walletClient) {
+      throw new Error('Wallet client is required for write operations.');
+    }
+
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'mintTo',
+      args: [params.args.account, params.args.tokenId, params.args.amount]
+    });
+
+    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
+      to: getAddress(this.contractAddress),
+      data: txData,
+      value: params.value ?? BigInt(0), // Optional value for payable methods
+      gasPrice: params.gasPrice // Optional gasPrice
+    };
+
+    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
+    const tx = await this.walletClient.sendTransaction(txInput as any);
+
+    // Return the transaction receipt
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async minter(params: { blockNumber?: bigint } = {}): Promise<Address> {
@@ -1322,7 +1515,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async pauser(params: { blockNumber?: bigint } = {}): Promise<Address> {
@@ -1399,7 +1592,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async safeBatchTransferFrom(params: {
@@ -1428,7 +1621,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async safeTransferFrom(params: {
@@ -1457,7 +1650,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async setApprovalForAll(params: {
@@ -1486,7 +1679,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async setBaseUri(params: {
@@ -1515,7 +1708,36 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
+  }
+
+  async setMaxSupplyPerToken(params: {
+    args: { newMaxSupply: bigint };
+    value?: bigint;
+    gasPrice?: bigint;
+  }): Promise<TransactionReceipt> {
+    if (!this.walletClient) {
+      throw new Error('Wallet client is required for write operations.');
+    }
+
+    const txData = encodeFunctionData({
+      abi: this.abi,
+      functionName: 'setMaxSupplyPerToken',
+      args: [params.args.newMaxSupply]
+    });
+
+    const txInput: Omit<Parameters<WalletClient['sendTransaction']>[0], 'account' | 'chain'> = {
+      to: getAddress(this.contractAddress),
+      data: txData,
+      value: params.value ?? BigInt(0), // Optional value for payable methods
+      gasPrice: params.gasPrice // Optional gasPrice
+    };
+
+    // This is necessary because the wallet client requires account and chain, which actually cause writes to throw
+    const tx = await this.walletClient.sendTransaction(txInput as any);
+
+    // Return the transaction receipt
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async setMinter(params: {
@@ -1544,7 +1766,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async setPauser(params: {
@@ -1573,7 +1795,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async setProceedsReceiver(params: {
@@ -1602,7 +1824,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async supportsInterface(params: { args: { interfaceId: string }; blockNumber?: bigint }): Promise<boolean> {
@@ -1751,7 +1973,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async unPause(params: { value?: bigint; gasPrice?: bigint }): Promise<TransactionReceipt> {
@@ -1776,7 +1998,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async updateBuilderTokenAddress(params: {
@@ -1805,7 +2027,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async updatePriceIncrement(params: {
@@ -1834,7 +2056,7 @@ export class ScoutProtocolNFTImplementationClient {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async uri(params: { args: { _tokenId: bigint }; blockNumber?: bigint }): Promise<string> {

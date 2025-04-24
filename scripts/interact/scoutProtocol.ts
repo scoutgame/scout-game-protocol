@@ -86,7 +86,6 @@ task('interactProtocol', 'Interact with ScoutGame Protocol contract via CLI').se
   }
 
   const ScoutProtocolProxyClient = new _ScoutProtocolProxyClient({
-    chain: connector.chain,
     contractAddress,
     walletClient: getWalletClient({ chain: connector.chain, privateKey, rpcUrl: connector.rpcUrl })
   });

@@ -1,3 +1,4 @@
+import { waitForTransactionReceipt } from '@packages/blockchain/waitForTransactionReceipt';
 import type {
   Abi,
   Account,
@@ -29,13 +30,11 @@ type ReadWriteWalletClient<
 >;
 
 export class IERC7802Client {
-  private contractAddress: Address;
+  public contractAddress: Address;
 
   private publicClient: PublicClient;
 
   private walletClient?: ReadWriteWalletClient;
-
-  private chain: Chain;
 
   public abi: Abi = [
     {
@@ -148,28 +147,19 @@ export class IERC7802Client {
   constructor({
     contractAddress,
     publicClient,
-    walletClient,
-    chain
+    walletClient
   }: {
     contractAddress: Address;
-    chain: Chain;
     publicClient?: PublicClient;
     walletClient?: ReadWriteWalletClient;
   }) {
     if (!publicClient && !walletClient) {
       throw new Error('At least one client is required.');
-    } else if (publicClient && walletClient) {
-      throw new Error('Provide only a public client or wallet clients');
     }
 
-    this.chain = chain;
     this.contractAddress = contractAddress;
 
     const client = publicClient || walletClient;
-
-    if (client!.chain!.id !== chain.id) {
-      throw new Error('Client must be on the same chain as the contract. Make sure to add a chain to your client');
-    }
 
     if (publicClient) {
       this.publicClient = publicClient;
@@ -205,7 +195,7 @@ export class IERC7802Client {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async crosschainMint(params: {
@@ -234,7 +224,7 @@ export class IERC7802Client {
     const tx = await this.walletClient.sendTransaction(txInput as any);
 
     // Return the transaction receipt
-    return this.walletClient.waitForTransactionReceipt({ hash: tx });
+    return waitForTransactionReceipt(this.publicClient, tx);
   }
 
   async supportsInterface(params: { args: { interfaceId: string }; blockNumber?: bigint }): Promise<boolean> {

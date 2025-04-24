@@ -41,7 +41,7 @@ async function generateAllApiClients() {
 
   const jsonFiles: string[] = [];
 
-  const rootPaths = [artifactsPath, preSeasonOnePath, preSeasonTwoPath, starterPackPath];
+  const rootPaths = [artifactsPath]; // , preSeasonOnePath, preSeasonTwoPath, starterPackPath];
 
   for (const rootPath of rootPaths) {
     const files = await getAllJsonFiles(rootPath);
