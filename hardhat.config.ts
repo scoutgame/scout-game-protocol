@@ -22,8 +22,8 @@ import './scripts/deploy/deployFoundryCreate2Deployer';
 
 // Scout Protocol Deploy Scripts
 import './scripts/deploy/protocol/01_deployDeterministicScoutgameTokenERC20';
-import './scripts/deploy/protocol/02_deployScoutProtocolBuilderNft';
-import './scripts/deploy/protocol/03_deployScoutProtocolBuilderStarterPackNft';
+import './scripts/deploy/protocol/02_deployScoutProtocolStandardNft';
+import './scripts/deploy/protocol/03_deployScoutProtocolStarterNft';
 import './scripts/deploy/protocol/04_deployEASResolver';
 import './scripts/deploy/protocol/05_deployScoutProtocol';
 import './scripts/deploy/protocol/06_deployVesting';

@@ -17,7 +17,7 @@ const PRIVATE_KEY = (
   process.env.PRIVATE_KEY?.startsWith('0x') ? process.env.PRIVATE_KEY : `0x${process.env.PRIVATE_KEY}`
 ) as `0x${string}`;
 
-task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol NftImplementation contract')
+task('deployScoutProtocolStandardNFT', 'Deploys or updates the Scout Protocol Standard NftImplementation contract')
   .addOptionalParam('deployment', 'Deployment environment name for output directory structure', 'dev')
   .setAction(async (taskArgs, hre) => {
     await hre.run('compile');
@@ -140,11 +140,11 @@ task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Nft
     }
 
     if (deployNew) {
-      const { scoutToken } = await inquirer.prompt([
+      const { devToken } = await inquirer.prompt([
         {
           type: 'input',
-          name: 'scoutToken',
-          message: 'Enter the Scout token address:',
+          name: 'devToken',
+          message: 'Enter the DEV token address:',
           validate: (input: string) => {
             if (!isAddress(input)) {
               return 'Please enter a valid Ethereum address';
@@ -174,7 +174,7 @@ task('deployScoutProtocolBuilderNFT', 'Deploys or updates the Scout Protocol Nft
       const tokenName = `ScoutGame (Season ${season})`;
       const tokenSymbol = `SCOUTGAME-S${season}`;
 
-      const tokenDeployArgs = [implementationAddress as Address, scoutToken as Address, proceedsReceiver] as [
+      const tokenDeployArgs = [implementationAddress as Address, devToken as Address, proceedsReceiver] as [
         Address,
         Address,
         Address
